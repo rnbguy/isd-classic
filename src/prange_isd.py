@@ -1,6 +1,6 @@
 import numpy as np
-import sympy
 import logging
+import utils
 
 _logger = logging.getLogger(__name__)
 _handler = logging.StreamHandler()
@@ -27,12 +27,15 @@ def permute(m, cols=True):
 
 # Uses LU decomposition w/ Doolittle algorithm, i.e. PA = LU.
 # Returns:
-# - P, the permutation of rows
-# - L, the matrix used to obtain the Reduced Row Echelon Form
-# - U, the matrix A in Reduced Row Echelon Form (and also unitary)
+# - MR, the matrix A in Reduced Row Echelon Form (and also unitary)
+# - U, the matrix used to obtain the Reduced Row Echelon Form
 def rref(m):
-    # TODO use LU functions
-    pass
+    # WARNING: The (ptot, ltot, u) returned from get_rref() are different from ours.
+    # Basically, u is the reduced matrix (so u -> mr), ltot is the matrix of transformations
+    # applied to it to be reduced (so l -> u)
+    _, u, mr = utils.get_rref(m, startAtEnd=True)
+    _logger.error("u is\n {0}".format(u))
+    return (mr, u)
 
 
 # s is r*1, h is r*n and possibly non systematic, t is weight of the error (i.e. # of ones)
@@ -42,28 +45,42 @@ def isd(s, t, h):
     n = h.shape[1]
     k = n - r
     _logger.debug("\nr={0}, n={1}, k={2}".format(r, n, k))
+    _logger.debug("\ns={0}, t={1}, H=\n{2}".format(s, t, h))
 
-    # Random permutation of H to obtain H_hat
-    # We can't use numpy because we must keep track the permutation
-    i = np.eye(r)
-    exit_c1 = False
-    exit_c2 = False
-    i = 0
-    while (not exit_c1):
-        while (not exit_c2):
+    exit_condition = False
+    while (not exit_condition):
+        # p stands for permutation matrix
+        hp, p = permute(h)
+        # tr stands for transformation matrix
+        hr, u = rref(hp)
+
+        while (all(item is None for item in (hr, u))):
+            _logger.debug("None returned, retrying")
             hp, p = permute(h)
             hr, u = rref(hp)
-            w = hr[:, r + 1:]
-            i += 1
-            if (np.array_equal(w, i)):
-                exit_c2 = True
-            if (i == 2):
-                exit_c2 = True
-        exit_c1 = True
+        hr = hr % 2
+        u = u % 2
+        p = p % 2
+        _logger.debug("p is \n{0}".format(p))
+        _logger.debug("h is \n{0}".format(hr))
+        _logger.debug("u is \n{0}".format(u))
 
-    # Get RREF of H using transformation U, i.e. UH = [V | W]
-    # where W should be an Identity r*r matrix
+        tst = hr[:, k:n]
+        id = np.eye(r)
+        np.testing.assert_almost_equal(tst, id)
 
-    # Apply Us to obtain s_signed
+        # Apply Us to obtain s_signed
+        s_sig = np.dot(u, s)
+        _logger.debug("s signed is {0}".format(s_sig))
+        # e_hat is [0_{1*k} S_signed^transposed]
+        k_zeros = np.zeros(k)
+        _logger.debug("k_zeros is {0}".format(k_zeros))
+        e_hat = np.concatenate([k_zeros, s_sig.T])
+        _logger.debug("e hat is {0}".format(e_hat))
 
-    # e_hat is [0_{1*k} S_signed^transposed]
+        # TODO check weight of e_hat
+        t_hat = np.sum(e_hat)
+        _logger.debug(t_hat)
+        exit_condition = t_hat == t
+
+    return np.dot(e_hat, p.T)
