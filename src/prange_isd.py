@@ -10,7 +10,7 @@ _handler.setFormatter(_formatter)
 if (_logger.hasHandlers()):
     _logger.handlers.clear()
 _logger.addHandler(_handler)
-_logger.setLevel(logging.DEBUG)
+_logger.setLevel(logging.ERROR)
 
 
 # Random permutation of columns (by default) or rows
@@ -44,10 +44,13 @@ def isd(s, t, h):
     r = h.shape[0]
     n = h.shape[1]
     k = n - r
+    k_zeros = np.zeros(k)
     _logger.debug("\nr={0}, n={1}, k={2}".format(r, n, k))
     _logger.debug("\ns={0}, t={1}, H=\n{2}".format(s, t, h))
 
     exit_condition = False
+    # From now on exit_condition is used to continue the algorithm until we found
+    # the right weight for the error
     while (not exit_condition):
         # p stands for permutation matrix
         hp, p = permute(h)
@@ -70,11 +73,9 @@ def isd(s, t, h):
         np.testing.assert_almost_equal(tst, id)
 
         # Apply Us to obtain s_signed
-        s_sig = np.dot(u, s)
+        s_sig = np.dot(u, s) % 2
         _logger.debug("s signed is {0}".format(s_sig))
         # e_hat is [0_{1*k} S_signed^transposed]
-        k_zeros = np.zeros(k)
-        _logger.debug("k_zeros is {0}".format(k_zeros))
         e_hat = np.concatenate([k_zeros, s_sig.T])
         _logger.debug("e hat is {0}".format(e_hat))
 
@@ -83,4 +84,6 @@ def isd(s, t, h):
         _logger.debug(t_hat)
         exit_condition = t_hat == t
 
-    return np.dot(e_hat, p.T)
+    e = np.dot(e_hat, p.T)
+    _logger.debug("s was {0}, e is {1}".format(s, e))
+    return e
