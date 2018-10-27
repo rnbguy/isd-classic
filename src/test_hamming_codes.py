@@ -1,4 +1,4 @@
-import hamming_code as hc
+import hamming_codes as hc
 import rectangular_code as rc
 import logging
 import numpy as np

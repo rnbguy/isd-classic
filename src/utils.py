@@ -70,6 +70,7 @@ def get_rref(m, stopAt=3, dtype=np.float, startAtEnd=False):
     _logger.debug("*** PART 3: Normalizing coeffients on diagonal *********")
     ptot, ltot, u = _normalize(u, square, square_start, ltot, ptot, dtype)
     _logger.debug("*** PART 3: Completed")
+    _logger.debug("***\nLTOT=\n{0}\nU=\n{1}".format(ltot, u))
     return (ptot, ltot, u)
 
 

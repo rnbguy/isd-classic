@@ -1,13 +1,13 @@
 import numpy as np
 import logging
 import utils
-import hamming_code
+import hamming_codes as hc
 
 
-# Only works if the mod2 operation is done at the end
-# TODO find a way to force mod2 operation in numpy
+# Only works if the mod2 operation is done on the results of the computation
+# ATM, it seems that np.array can't be forced to do mod2 operations (even w/ dtype=bool)
 def test_parity_matrix(n, k, startAtEnd=False):
-    h = hamming_code.get_parity_matrix_nonsystematic(n, k)
+    h = hc.get_parity_matrix_nonsystematic(n, k)
     sum_h = np.sum(h)
     _logger.debug("TESTING PARITY MATRIX ({0}, {1}), {2},\nH = \n{2}".format(
         n, k, startAtEnd, 1 * h))
@@ -63,11 +63,6 @@ def test_zero():
     np.testing.assert_almost_equal(lta, u)
     _logger.debug("...OK")
 
-    # tst = np.dot(l.T, u)
-    # _logger.debug("Testing L.T * U, should be equal to A\n{0}".format(tst))
-    # tst = np.dot(p, a)
-    # _logger.debug("Testing P * A, should be equal to A\n{0}".format(tst))
-
 
 def test_pdf():
     _logger.debug("***test pdf")
@@ -115,12 +110,6 @@ def test_wiki(startAtEnd=False):
     _logger.debug("...OK")
 
 
-def test_sympy_rref(h):
-    import sympy
-    m = sympy.Matrix(h).rref()
-    _logger.debug(m)
-
-
 def main():
     test_wiki()
     # test_wiki(True)
@@ -142,6 +131,6 @@ if __name__ == "__main__":
     if (_logger.hasHandlers()):
         _logger.handlers.clear()
     _logger.addHandler(_handler)
-    _logger.setLevel(logging.DEBUG)
+    _logger.setLevel(logging.ERROR)
 
     main()
