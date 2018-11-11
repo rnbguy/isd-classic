@@ -8,8 +8,8 @@ def test_743_codeword(u):
 
     g = hc.get_fixed_hamming_generator_743()
     c = rc.get_codeword_of_message(u, g)
-    print("Original message is {0}".format(u))
-    print("Generated codeword is {0}".format(c))
+    _logger.debug("Original message is {0}".format(u))
+    _logger.debug("Generated codeword is {0}".format(c))
     # test_944(, np.array([0, 0, 0, 1, 0, 0, 0, 0, 0]))
     return c
 
@@ -28,25 +28,26 @@ def test_743_syndrome(u, e, ctilde):
     """
     h = hc.get_parity_matrix_systematic(7, 4)
     s = np.dot(h, e.T)
-    print("Syndrome is {0}".format(s))
+    _logger.debug("Syndrome is {0}".format(s))
     return s
 
 
 def main():
-    global logger
-    logger = logging.getLogger(__name__)
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter(
-        '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
     u = np.array([1, 0, 0, 1])
     c = test_743_codeword(u)
     e = np.array([0, 1, 0, 0, 0, 0, 0])
     ctilde = (c + e) % 2
     s = test_743_syndrome(u, e, ctilde)
 
+_logger = logging.getLogger(__name__)
+_handler = logging.StreamHandler()
+_formatter = logging.Formatter(
+    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+_handler.setFormatter(_formatter)
+if (_logger.hasHandlers()):
+    _logger.handlers.clear()
+_logger.addHandler(_handler)
+_logger.setLevel(logging.DEBUG)
 
 if __name__ == "__main__":
     main()

@@ -36,17 +36,18 @@ def test_944_syndrome(u, e, ctilde):
 
 
 def main():
-    global logger
-    logger = logging.getLogger(__name__)
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter(
-        '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
     u = np.array([1, 1, 1, 1])
     test_944_codeword(u)
 
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+handler.setFormatter(formatter)
+if (logger.hasHandlers()):
+    logger.handlers.clear()
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 if __name__ == "__main__":
     main()

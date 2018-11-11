@@ -121,16 +121,15 @@ def main():
     test_parity_matrix(15, 11, True)
 
 
-if __name__ == "__main__":
-    global _logger
-    _logger = logging.getLogger(__name__)
-    _handler = logging.StreamHandler()
-    _formatter = logging.Formatter(
-        '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    _handler.setFormatter(_formatter)
-    if (_logger.hasHandlers()):
-        _logger.handlers.clear()
-    _logger.addHandler(_handler)
-    _logger.setLevel(logging.ERROR)
+_logger = logging.getLogger(__name__)
+_handler = logging.StreamHandler()
+_formatter = logging.Formatter(
+    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+_handler.setFormatter(_formatter)
+if (_logger.hasHandlers()):
+    _logger.handlers.clear()
+_logger.addHandler(_handler)
+_logger.setLevel(logging.ERROR)
 
+if __name__ == "__main__":
     main()
