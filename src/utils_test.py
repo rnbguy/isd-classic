@@ -67,6 +67,23 @@ def test_zero():
     _logger.debug("...OK")
 
 
+def test_one():
+    _logger.debug("***test one")
+    m = np.array([[1, 0, 1, 6], [0, -3, 1, 7], [2, 1, 3, 15]])
+    exp_res = np.eye(3)
+    tmp = np.array([[2, -1, 4]]).T
+    exp_res = np.hstack((exp_res, tmp))
+    p, l, u = utils.get_rref(m, 3)
+    ltm = np.dot(l, m)
+
+    _logger.debug("M=\n{0}\nM_RREF=\n{1}\nLTOT=\n{2}\nLTOT*M=\n{3}".format(
+        m, u, l, ltm))
+    _logger.debug("Asserting equalities...")
+    np.testing.assert_almost_equal(u, exp_res)
+    np.testing.assert_almost_equal(ltm, u)
+    _logger.debug("...OK")
+
+
 def test_pdf():
     _logger.debug("***test pdf")
     _logger.debug("***stopAt 1***")
@@ -117,6 +134,7 @@ def main():
     # test_wiki(True)
     test_pdf()
     test_zero()
+    test_one()
     test_parity_matrix(7, 4)
     test_parity_matrix(7, 4, True)
     test_parity_matrix(15, 11)
