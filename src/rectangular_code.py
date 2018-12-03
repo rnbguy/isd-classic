@@ -13,13 +13,13 @@ _logger.setLevel(logging.DEBUG)
 
 
 def get_codeword_of_message(u, g):
-    """FIXME! briefly describe function
+    """
+    Given an original message and a generation matrix G, returns the corresponding codeword.
 
     :param u: the original vector message, 1xk
     :param g: the generation matrix kxn
     :returns: codeword vector 1xk
     :rtype: numpy.array
-
     """
     n = g.shape[1]  # columns
     k = g.shape[0]  # rows

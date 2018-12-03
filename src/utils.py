@@ -12,13 +12,13 @@ _logger.addHandler(_handler)
 _logger.setLevel(logging.DEBUG)
 
 
-# It uses a sort of LPU decomposition, where we're not really interested in
-# L and P separately, but as a whole matrix applied to the matrix to obtain the
-# RREF.
-# I.e., given the original matrix M, we want to obtain its RREF form U and the
-# corresponding L matrix s.t. L*M = U.
 def get_rref(m, stopAt=3, startAtEnd=False, mod=None):
-    """FIXME! briefly describe function
+    """
+    It uses a sort of LPU decomposition, where we're not really interested in
+    L and P separately, but as a whole matrix applied to the matrix to obtain the
+    RREF.
+    I.e., given the original matrix M, we want to obtain its RREF form U and the
+    corresponding L matrix s.t. L*M = U.
 
     :param m: The matrix to be reduced
     :param stopAt: 1 if we want only the REF form, 2 if we want the RREF form, 3 (default) if we want the unitary RREF
@@ -81,8 +81,10 @@ def get_rref(m, stopAt=3, startAtEnd=False, mod=None):
     return (ptot, ltot, u)
 
 
-# A REF is a triangular matrix with all 0's below the diagonal
 def _ref(u, square, square_start, ltot, ptot, mod):
+    """
+    A REF is a triangular matrix with all 0's below the diagonal
+    """
     for i in range(square_start, square_start + square):  # columns, 0.. 3
         l = np.eye(square)
         p = np.eye(square)
@@ -139,9 +141,11 @@ def _ref(u, square, square_start, ltot, ptot, mod):
     return (ptot, ltot, u)
 
 
-# A RREF is a triangular matrix with all 0's below and above the diagonal
-# (i.e. all non-zero values are on the diagonal)
 def _rref(u, square, square_start, ltot, ptot, mod):
+    """
+    A RREF is a triangular matrix with all 0's below and above the diagonal
+    (i.e. all non-zero values are on the diagonal)
+    """
     for i in range(square_start + square - 1, square_start,
                    -1):  # columns, 2..1
         l = np.eye(square)
@@ -192,9 +196,11 @@ def _rref(u, square, square_start, ltot, ptot, mod):
     return (ptot, ltot, u)
 
 
-# We put all the non-zero entries of the diagonal to 1
-# At this point, it shouldn't be necessary to do mod operation, isn't it?
 def _normalize(u, square, square_start, ltot, ptot, mod):
+    """
+    Put all the non-zero entries of the diagonal to 1
+    At this point, it shouldn't be necessary to do mod operation, isn't it?
+    """
     l = np.eye(square)
     for i in range(square_start, square_start + square):
         _logger.debug("i = {0}".format(i))

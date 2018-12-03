@@ -14,8 +14,13 @@ _logger.addHandler(_handler)
 _logger.setLevel(logging.DEBUG)
 
 
-# As the nonsystematic version, this only works for Hamming codes
 def get_parity_matrix_systematic(n, k):
+    """
+    Obtain a systematic matrix for an [n, k] code. Basically, we first get a
+    non-systematix parity matrix H using the appropriate function. Then, we
+    permute the columns until the left (n-k)x(n-k) submatrix of H corresponds
+    to the identity matrix I.
+    """
     r = n - k
     h = get_parity_matrix_nonsystematic(n, k)
 
@@ -24,7 +29,7 @@ def get_parity_matrix_systematic(n, k):
     exit_condition = False
     while (not exit_condition):
         _logger.debug("Random permutation number {0}".format(i))
-        #
+
         # Numpy Random permutation works on rows, we have to permute columns
         # TODO we generate random columns to permute, but this really should
         # be an educated work to avoid repeating same permutation over and over
@@ -41,13 +46,18 @@ def get_parity_matrix_systematic(n, k):
     return hp
 
 
-# This only works for Hamming codes, i.e. codes in the form
-# (2^m - 1, 2^m - 1 - m)
-# which always have a minimum Hamming distance of 3
-# TODO Maybe to make it work for general rectangular code, it would suffice to
-# choose only a subset of the whole range 0..2^m - 1, i.e. the subset
-# with size n
 def get_parity_matrix_nonsystematic(n, k):
+    """
+    This only works for Hamming codes, i.e. codes in the form
+    [2^m - 1, 2^m - 1 - m]
+    which always have a minimum Hamming distance of 3.
+    The standard way to create a non-systematix parity matrix H for the
+    Hamming code [2^m - 1, 2^m - 1 - m] (e.g., if m = 3, we have a [7, 4])
+    is to enumerate all the integers b/w 1 and 2^m in binary form. All of this
+    binary integers will represent a column vector of the parity matrix H.
+    So, we put all of them one after the other.
+    As for the usual notation, 2^m - 1 = n and 2^m - 1 - m =k.
+    """
     # e.g. n = 7, k = 4, r = 3
     r = n - k
     support = np.array([i for i in range(1, n + 1)])
@@ -64,8 +74,11 @@ def get_parity_matrix_nonsystematic(n, k):
 
 
 def get_fixed_hamming_generator_743():
+    """
+    Get a fixed systematic G matrix for a [7, 4, 3] code, i.e. the matrix
+    [[1 0 0 0 ], [0 1 0 0], [0 0 1 0], [0 0 0 1], [1 1 0 1], [1 0 1 1], [0 1 1 1]].T
+    """
     i4 = np.eye(4)
-    # i4 = np.eye(4, dtype=np.bool)
     a43 = np.array([[1, 1, 0, 1], [1, 0, 1, 1], [0, 1, 1, 1]]).T
 
     g = np.concatenate((i4, a43), axis=1)

@@ -15,6 +15,9 @@ _logger.setLevel(logging.DEBUG)
 
 
 def get_fixed_generator_944():
+    """
+    Get a fixed generator matrix G for the [9, 4, 4] code
+    """
     i4 = np.eye(4)
     # i4 = np.eye(4, dtype=np.bool)
     a45 = np.array([[1, 1, 0, 0], [0, 0, 1, 1], [1, 0, 1, 0], [0, 1, 0, 1],
