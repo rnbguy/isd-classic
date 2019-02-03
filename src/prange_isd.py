@@ -56,7 +56,7 @@ def rref(m):
     # obtain the RREF (so ltot corresponds to our u)
     # Note that the 1st parameter returned by the get_rref function is not used
     _, u, mr = utils.get_rref(m, startAtEnd=True, mod=2)
-    _logger.debug("u is\n {0}".format(u))
+    #_logger.debug("u is\n {0}".format(u))
     return (mr, u)
 
 
@@ -70,52 +70,65 @@ def isd(s, t, h):
     :rtype: numpy.array
 
     """
+    _logger.debug("s={0}, t={1}, H=\n{2}".format(s, t, h))
     r = h.shape[0]
     n = h.shape[1]
     k = n - r
-    _logger.debug("\nr={0}, n={1}, k={2}".format(r, n, k))
-    _logger.debug("\ns={0}, t={1}, H=\n{2}".format(s, t, h))
+    _logger.debug("r={0}, n={1}, k={2}".format(r, n, k))
 
-    exit_condition = False
-    # From now on exit_condition is used to continue the algorithm until we found
+    # From now on exit_condition_weight is used to continue the algorithm until we found
     # the right weight for the error
-    while (not exit_condition):
-        # p stands for permutation matrix, hp is the permuted version of h
-        hp, p = permute(h)
-        # hr stands for the matrix put in RREF, u for the transformation matrix
-        # applied to obtain the RREF from the original matrix
-        hr, u = rref(hp)
+    exit_condition_weight = False
+    while (not exit_condition_weight):
+        # From now on exit_condition_rref is used to continue the algorithm until we found
+        # the right rref, i.e. having the identity matrix on the right
+        exit_condition_rref = False
 
-        # If rref returns None, it means that reduction was not possible
-        while (all(item is None for item in (hr, u))):
-            _logger.debug("None returned, retrying")
-            # Try again to permute and then obtain the RREF
+        # Trying to permute and then obtain the RREF
+        while (not exit_condition_rref):
+            # p stands for permutation matrix, hp is the permuted version of h
+            # hr stands for the matrix put in RREF, u for the transformation matrix
+            # applied to obtain the RREF from the original matrix
             hp, p = permute(h)
             hr, u = rref(hp)
+            # If rref returns None, it means that reduction was not possible
+            exit_condition_rref = not(all(item is None for item in (hr, u)))
+            if exit_condition_rref:
+                _logger.debug("EXIT CONDITION RREF IS TRUE, CHECKING WEIGHT")
+            else:
+                _logger.debug("exit condition rref is false, retrying")
         _logger.debug("p is \n{0}".format(p))
-        _logger.debug("h is \n{0}".format(hr))
+        _logger.debug("hr is \n{0}".format(hr))
         _logger.debug("u is \n{0}".format(u))
 
-        # We check that the right hand side, (n-k)*(n-k)=r*r matrix is an
+        # Double check that the right hand side, (n-k)*(n-k)=r*r matrix is an
         # identity matrix (and so H is in standard form)
-        tst = hr[:, k:n]
-        id = np.eye(r)
-        np.testing.assert_almost_equal(tst, id)
+        # tst = hr[:, k:n]
+        # id = np.eye(r)
+        # np.testing.assert_almost_equal(tst, id)
 
         # Apply U to s to obtain s_signed and applies mod2 to only obtain bits
         s_sig = np.mod(np.dot(u, s), 2)
         _logger.debug("s signed is {0}".format(s_sig))
-        # e_hat is the concatenation of all zeros 1xk vector and s_signed^transposed
-        e_hat = np.concatenate([np.zeros(k), s_sig.T])
-        _logger.debug("e hat is {0}".format(e_hat))
-
-        # check weight of e_hat; if it's equal to t, we exit the loop
-        # bcz we've found the correct e_hat
-        t_hat = np.sum(e_hat)
-        _logger.debug(t_hat)
-        exit_condition = t_hat == t
+        # check weight of s_sig; if it's equal to t, we exit the loop
+        # bcz we've found the correct e_hat.
+        # In reality, we should check for the weight of e_hat, but the latter 
+        # is the concatenation of zeros and s_sig, so we anticipate the test
+        t_hat = np.sum(s_sig)
+        _logger.debug("Weight of s is {0}".format(t_hat))
+        exit_condition_weight = t_hat == t
+        if exit_condition_weight:
+            _logger.debug("WEIGHT IS CORRECT, FOUND e")
+            # e_hat is the concatenation of all zeros 1xk vector and s_signed^transposed
+            e_hat = np.concatenate([np.zeros(k), s_sig.T])
+            _logger.info("p is \n{0}".format(p))
+            _logger.info("u is \n{0}".format(u))
+            _logger.info("s signed is {0}".format(s_sig))
+            _logger.info("e hat is {0}".format(e_hat))
+        else:
+            _logger.debug("Weight is wrong, retrying")
 
     # return the error vector multiplying e_hat by the permutation matrix
     e = np.mod(np.dot(e_hat, p.T), 2)
-    _logger.debug("s was {0}, e is {1}".format(s, e))
+    _logger.info("s was {0}, e is {1}".format(s, e))
     return e
