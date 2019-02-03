@@ -9,7 +9,7 @@ _handler.setFormatter(_formatter)
 if (_logger.hasHandlers()):
     _logger.handlers.clear()
 _logger.addHandler(_handler)
-_logger.setLevel(logging.DEBUG)
+_logger.setLevel(logging.WARN)
 
 
 def get_rref(m, stopAt=3, startAtEnd=False, mod=None):

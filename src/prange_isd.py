@@ -10,7 +10,7 @@ _handler.setFormatter(_formatter)
 if (_logger.hasHandlers()):
     _logger.handlers.clear()
 _logger.addHandler(_handler)
-_logger.setLevel(logging.DEBUG)
+_logger.setLevel(logging.INFO)
 
 
 # Random permutation of columns (by default) or rows

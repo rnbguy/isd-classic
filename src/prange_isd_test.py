@@ -14,9 +14,11 @@ def assert_743_fixed_h():
                                [0, 1, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0],
                                [1, 0, 0, 0, 0, 0, 0]])
 
+    #for s in ([[1, 0, 1]]):
     for i, s in enumerate(syndromes):
         _logger.debug("Launching prange with s = {0}".format(s))
         e = prange_isd.isd(s, 1, h)
+        _logger.debug("For s = {0}, w = 1, h = \n{1}\nerror is {2}".format(s, h, e))
         _logger.debug("ASSERTING TEST RESULTS ...")
         np.testing.assert_array_almost_equal(e, error_patterns[i])
         _logger.debug("... OK")
