@@ -87,22 +87,31 @@ def isd(s, t, h):
         # Trying to permute and then obtain the RREF
         while (not exit_condition_rref):
             # p stands for permutation matrix, hp is the permuted version of h
+            # We are trying to permute the columns of H in such a way that the
+            # columns of the information set I, with |I| = k, are packed to the
+            # left of h.
+            hp, p = permute(h)
             # hr stands for the matrix put in RREF, u for the transformation matrix
             # applied to obtain the RREF from the original matrix
-            hp, p = permute(h)
+            # We are trying to get the RREF of hp with the identity matrix r x r
+            # placed to the right of hp
             hr, u = rref(hp)
-            # If rref returns None, it means that reduction was not possible
+            # If rref returns None, it means that reduction was not possible,
+            # i.e. the rightmost r x r matrix is not full-rank (different from
+            # the id matrix in our case.
             exit_condition_rref = not(all(item is None for item in (hr, u)))
             if exit_condition_rref:
-                _logger.debug("EXIT CONDITION RREF IS TRUE, CHECKING WEIGHT")
+                _logger.debug("EXIT CONDITION RREF IS TRUE, GOING TO CHECK WEIGHT")
             else:
                 _logger.debug("exit condition rref is false, retrying")
+
         _logger.debug("p is \n{0}".format(p))
-        _logger.debug("hr is \n{0}".format(hr))
+        _logger.debug("hr, that is u.h.p is \n{0}".format(hr))
         _logger.debug("u is \n{0}".format(u))
 
         # Double check that the right hand side, (n-k)*(n-k)=r*r matrix is an
         # identity matrix (and so H is in standard form)
+        # Commented out to improve speed
         # tst = hr[:, k:n]
         # id = np.eye(r)
         # np.testing.assert_almost_equal(tst, id)
@@ -121,10 +130,11 @@ def isd(s, t, h):
             _logger.debug("WEIGHT IS CORRECT, FOUND e")
             # e_hat is the concatenation of all zeros 1xk vector and s_signed^transposed
             e_hat = np.concatenate([np.zeros(k), s_sig.T])
-            _logger.info("p is \n{0}".format(p))
-            _logger.info("u is \n{0}".format(u))
             _logger.info("s signed is {0}".format(s_sig))
             _logger.info("e hat is {0}".format(e_hat))
+            _logger.info("p is \n{0}".format(p))
+            _logger.info("u is \n{0}".format(u))
+            _logger.info("hr, that is u.h.p is \n{0}".format(hr))
         else:
             _logger.debug("Weight is wrong, retrying")
 
