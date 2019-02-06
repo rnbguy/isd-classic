@@ -3,14 +3,6 @@ import logging
 import utils
 
 _logger = logging.getLogger(__name__)
-_handler = logging.StreamHandler()
-_formatter = logging.Formatter(
-    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-_handler.setFormatter(_formatter)
-if (_logger.hasHandlers()):
-    _logger.handlers.clear()
-_logger.addHandler(_handler)
-_logger.setLevel(logging.INFO)
 
 
 # Random permutation of columns (by default) or rows
@@ -99,9 +91,10 @@ def isd(s, t, h):
             # If rref returns None, it means that reduction was not possible,
             # i.e. the rightmost r x r matrix is not full-rank (different from
             # the id matrix in our case.
-            exit_condition_rref = not(all(item is None for item in (hr, u)))
+            exit_condition_rref = not (all(item is None for item in (hr, u)))
             if exit_condition_rref:
-                _logger.debug("EXIT CONDITION RREF IS TRUE, GOING TO CHECK WEIGHT")
+                _logger.debug(
+                    "EXIT CONDITION RREF IS TRUE, GOING TO CHECK WEIGHT")
             else:
                 _logger.debug("exit condition rref is false, retrying")
 
@@ -121,7 +114,7 @@ def isd(s, t, h):
         _logger.debug("s signed is {0}".format(s_sig))
         # check weight of s_sig; if it's equal to t, we exit the loop
         # bcz we've found the correct e_hat.
-        # In reality, we should check for the weight of e_hat, but the latter 
+        # In reality, we should check for the weight of e_hat, but the latter
         # is the concatenation of zeros and s_sig, so we anticipate the test
         t_hat = np.sum(s_sig)
         _logger.debug("Weight of s is {0}".format(t_hat))
