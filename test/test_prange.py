@@ -23,7 +23,7 @@ class ISDPrangeTest(ISDTest):
         for i, s in enumerate(syndromes):
             with self.subTest(h=h_p, s=s, w=w):
                 self.logger.debug("Launching prange with s = {0}".format(s))
-                e = prange.isd(h_p, s, w)
+                e = prange.run(h_p, s, w)
                 self.logger.debug(
                     "For s = {0}, w = 1, h = \n{1}\nerror is {2}".format(
                         s, h_p, e))
