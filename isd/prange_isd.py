@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-import utils
+from isd import utils
 
 _logger = logging.getLogger(__name__)
 

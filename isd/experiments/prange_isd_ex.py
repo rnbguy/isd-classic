@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-import prange_isd
+from src import prange_isd
 import hamming_codes
 
 
@@ -19,6 +19,7 @@ def test2():
 def main():
     test1()
     test2()
+
 
 _logger = logging.getLogger(__name__)
 _handler = logging.StreamHandler()
