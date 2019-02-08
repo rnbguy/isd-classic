@@ -1,0 +1,3 @@
+Modules inside this dir should be run from top level dir using python -m switch.
+
+For example, from isd-prange, run `python -m experiments.prange_isd_ex`
