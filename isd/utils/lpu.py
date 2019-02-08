@@ -2,14 +2,6 @@ import numpy as np
 import logging
 
 _logger = logging.getLogger(__name__)
-_handler = logging.StreamHandler()
-_formatter = logging.Formatter(
-    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-_handler.setFormatter(_formatter)
-if (_logger.hasHandlers()):
-    _logger.handlers.clear()
-_logger.addHandler(_handler)
-_logger.setLevel(logging.WARN)
 
 
 def get_rref(m, stopAt=3, startAtEnd=False, mod=None):

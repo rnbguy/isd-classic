@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-from isd import utils
+from isd.utils import lpu
 
 _logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def rref(m):
     # ltot is the matrix of transformations applied to the original matrix to
     # obtain the RREF (so ltot corresponds to our u)
     # Note that the 1st parameter returned by the get_rref function is not used
-    _, u, mr = utils.get_rref(m, startAtEnd=True, mod=2)
+    _, u, mr = lpu.get_rref(m, startAtEnd=True, mod=2)
     #_logger.debug("u is\n {0}".format(u))
     return (mr, u)
 
