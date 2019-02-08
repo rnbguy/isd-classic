@@ -52,7 +52,7 @@ def rref(m):
     return (mr, u)
 
 
-def isd(s, t, h):
+def isd(h, s, t):
     """Run the isd algorithm
 
     :param s: the (n-k)x1 syndrome vector
