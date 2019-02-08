@@ -12,8 +12,11 @@ class ISDPrangeTest(ISDTest):
         ("n15_k11_d4_w1", 15, 11, 4, 1),
     ])
     def test_h_s_d_w(self, name, n, k, d, w):
-        h, syndromes, errors, w = rectangular_codes_hardcoded.get_isd_parameters(
+        # first _ is the G, we are not interested in it
+        # second _ is the isHamming boolean value, not interested
+        h, _, syndromes, errors, w, _ = rectangular_codes_hardcoded.get_isd_parameters(
             n, k, d, w)
+        self.logger.debug("h = \n{0}".format(h))
         p = np.random.permutation(np.eye(h.shape[1]))
         h_p = np.dot(h, p)
         errors_p = np.dot(errors, p)
