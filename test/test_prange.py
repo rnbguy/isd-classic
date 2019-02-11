@@ -7,6 +7,15 @@ from isd.utils import rectangular_codes_hardcoded
 
 
 class ISDPrangeTest(ISDTest):
+    @classmethod
+    def setUpClass(cls):
+        # Just to use prange logger
+        ISDTest.setUpClass()
+        import logging
+        prange_isd_logger = logging.getLogger('isd.methods.prange')
+        prange_isd_logger.setLevel(cls.logger.level)
+        prange_isd_logger.handlers = cls.logger.handlers
+
     @parameterized.expand([
         ("n7_k4_d3_w1", 7, 4, 3, 1),
         ("n15_k11_d4_w1", 15, 11, 4, 1),
