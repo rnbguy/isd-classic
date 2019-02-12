@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 from parameterized import parameterized
 from test.isd_common import ISDTest
-from isd.utils import lpu
+from isd.utils import lu
 from isd.utils.rectangular_codes_generation import generate_parity_matrix_nonsystematic_for_hamming
 
 
@@ -25,7 +25,7 @@ class TestLPU(ISDTest):
 
         # h_rref is the original H in rref, l is the transformation matrix applied
         # overall to obtain u from H
-        _, l, h_rref = lpu.get_rref(h, 3, startAtEnd=startAtEnd, mod=2)
+        _, l, h_rref = lu.get_rref(h, 3, startAtEnd=startAtEnd, mod=2)
         # The idea is that if all items are None, then the algorithm wasn't able to
         # find a proper unitary rref submatrix, so we shuffle again the columns
         # of the original matrix
@@ -35,7 +35,7 @@ class TestLPU(ISDTest):
             self.logger.debug(
                 "Overall matrix H sum (number of ones) is {0}".format(
                     np.sum(h)))
-            _, l, h_rref = lpu.get_rref(h, 3, startAtEnd=startAtEnd, mod=2)
+            _, l, h_rref = lu.get_rref(h, 3, startAtEnd=startAtEnd, mod=2)
 
         # L*H matrix, should be equal to the original matrix if all went good
         self.logger.debug("H=\n{0}\nH_RREF=\n{1}\nLTOT=\n{2}\n".format(
@@ -62,7 +62,7 @@ class TestLPU(ISDTest):
     def test_zero(self):
         a = np.array([[0, 1, 1], [3, 1, 1], [8, 7, 9]])
         exp_res = np.eye(3)
-        p, l, u = lpu.get_rref(a, 3)
+        p, l, u = lu.get_rref(a, 3)
         lta = np.dot(l, a)
 
         self.logger.debug(
@@ -76,7 +76,7 @@ class TestLPU(ISDTest):
         exp_res = np.eye(3)
         tmp = np.array([[2, -1, 4]]).T
         exp_res = np.hstack((exp_res, tmp))
-        p, l, u = lpu.get_rref(m, 3)
+        p, l, u = lu.get_rref(m, 3)
         ltm = np.dot(l, m)
 
         self.logger.debug(
@@ -89,7 +89,7 @@ class TestLPU(ISDTest):
         a = np.array([[2, 1, 1, 0], [4, 3, 3, 1], [8, 7, 9, 5], [6, 7, 9, 8]])
         exp_res = np.array([[2, 1, 1, 0], [0, 1, 1, 1], [0, 0, 2, 2],
                             [0, 0, 0, 2]])
-        p, l, u = lpu.get_rref(a, 1)
+        p, l, u = lu.get_rref(a, 1)
         tst = np.dot(l, a)
         self.logger.debug(
             "A=\n{0}\nA_RREF=\n{1}\nLTOT=\n{2}\nLTOT*A=\n{3}".format(
@@ -102,13 +102,13 @@ class TestLPU(ISDTest):
         a = np.array([[2, 1, 1, 0], [4, 3, 3, 1], [8, 7, 9, 5], [6, 7, 9, 8]])
         exp_res = np.array([[2, 1, 1, 0], [0, 1, 1, 1], [0, 0, 2, 2],
                             [0, 0, 0, 2]])
-        p, l, u = lpu.get_rref(a, 1)
+        p, l, u = lu.get_rref(a, 1)
         tst = np.dot(l, a)
         self.logger.debug(
             "A=\n{0}\nA_RREF=\n{1}\nLTOT=\n{2}\nLTOT*A=\n{3}".format(
                 a, u, l, tst))
 
-        p, l, u = lpu.get_rref(a, 3)
+        p, l, u = lu.get_rref(a, 3)
         exp_res = np.eye(4)
         tst = np.dot(l, a)
         self.logger.debug(
@@ -130,7 +130,7 @@ class TestLPU(ISDTest):
             [0, 0, 1, -1],
         ])
 
-        ptot, ltot, a_rref = lpu.get_rref(a)
+        ptot, ltot, a_rref = lu.get_rref(a)
         lta = np.dot(ltot, a)
 
         self.logger.debug(

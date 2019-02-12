@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-from isd.utils import lpu
+from isd.utils import lu
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +15,7 @@ def run(h, s, t):
     :rtype: numpy.array
 
     """
+    logger.debug("*******")
     logger.debug("s={0}, t={1}, H=\n{2}".format(s, t, h))
     r = h.shape[0]
     n = h.shape[1]
@@ -132,6 +133,6 @@ def _rref(m):
     # ltot is the matrix of transformations applied to the original matrix to
     # obtain the RREF (so ltot corresponds to our u)
     # Note that the 1st parameter returned by the get_rref function is not used
-    _, u, mr = lpu.get_rref(m, startAtEnd=True, mod=2)
+    _, u, mr = lu.get_rref(m, startAtEnd=True, mod=2)
     #logger.debug("u is\n {0}".format(u))
     return (mr, u)

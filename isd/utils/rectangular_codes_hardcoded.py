@@ -4,7 +4,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-def get_isd_parameters(n, k, d, w):
+def get_isd_systematic_parameters(n, k, d, w):
     """Given the input parameters, returns the corresponding isd hardcoded
     parameters (if they are present)
 

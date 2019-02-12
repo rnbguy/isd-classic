@@ -6,7 +6,6 @@ import unittest
 class ISDTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        print("Hello")
         cls.logger = logging.getLogger(cls.__name__)
         if (os.getenv('LOG_LEVEL')):
             stream_handler = logging.StreamHandler()

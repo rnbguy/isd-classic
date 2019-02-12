@@ -46,7 +46,7 @@ def get_rref(m, stopAt=3, startAtEnd=False, mod=None):
     ptot = np.eye(square)
 
     if (stopAt < 1 or stopAt > 3):
-        exit("Error stopAt")
+        raise Exception("RREF, stopAt must be between 1 and 3 (included)")
 
     _logger.debug("*** PART 1: Row Echelon Form")
     ptot, ltot, u = _ref(u, square, square_start, ltot, ptot, mod)
