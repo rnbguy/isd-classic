@@ -17,15 +17,19 @@ class ISDPrangeTest(ISDTest):
         prange_isd_logger.handlers = cls.logger.handlers
 
     @parameterized.expand([
+        ("n4_k1_d4_w1", 4, 1, 4, 1, False),
         ("n7_k4_d3_w1", 7, 4, 3, 1, True),
         ("n15_k11_d4_w1", 15, 11, 4, 1, True),
         ("n7_k4_d3_w1", 7, 4, 3, 1, False),
+        ("n8_k4_d4_w1", 8, 4, 4, 1, False),
     ])
     def test_h_s_d_w(self, name, n, k, d, w, scramble):
         # first _ is the G, we are not interested in it
         # second _ is the isHamming boolean value, not interested
         h, _, syndromes, errors, w, _ = rectangular_codes_hardcoded.get_isd_systematic_parameters(
             n, k, d, w)
+        self.logger.info("n = {0}, k = {1}, d = {2}, w = {3}".format(
+            n, k, d, w))
         self.logger.debug("h = \n{0}".format(h))
 
         if (scramble):
