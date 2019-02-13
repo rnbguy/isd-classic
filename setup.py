@@ -8,7 +8,7 @@ requirements = [
 ]
 
 setup(
-    name="isd",
+    name="isdclassic",
     version="0.1.0",
     description="Software that implements a few ISD algorithms",
     url="https://github.com/tigerjack/isd-prange",
@@ -25,7 +25,7 @@ setup(
         "Topic :: Scientific/Engineering",
     ],
     keywords="isd prange",
-    packages=find_packages(exclude=['test*']),
+    packages=find_packages(exclude=['test*', 'experiments*']),
     install_requires=requirements,
     include_package_data=True,
     python_requires=">=3.5",

@@ -2,8 +2,8 @@ import numpy as np
 import unittest
 from parameterized import parameterized
 from test.isd_common import ISDTest
-from isd.methods import bruteforce
-from isd.utils import rectangular_codes_hardcoded
+from isdclassic.methods import bruteforce
+from isdclassic.utils import rectangular_codes_hardcoded
 
 
 class ISDBruteforceTest(ISDTest):

@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from parameterized import parameterized
 from test.isd_common import ISDTest
-import isd.utils.rectangular_codes_hardcoded as rch
+import isdclassic.utils.rectangular_codes_hardcoded as rch
 
 
 class TestHardcoded(ISDTest):

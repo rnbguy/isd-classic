@@ -2,8 +2,8 @@ import numpy as np
 import unittest
 from parameterized import parameterized
 from test.isd_common import ISDTest
-from isd.utils import lu
-from isd.utils.rectangular_codes_generation import generate_parity_matrix_nonsystematic_for_hamming
+from isdclassic.utils import lu
+from isdclassic.utils.rectangular_codes_generation import generate_parity_matrix_nonsystematic_for_hamming
 
 
 class TestLPU(ISDTest):

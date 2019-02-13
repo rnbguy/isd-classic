@@ -2,8 +2,8 @@ import unittest
 import numpy as np
 from parameterized import parameterized
 from test.isd_common import ISDTest
-from isd.utils.rectangular_codes_hardcoded import get_systematic_g
-from isd.utils.rectangular_codes_compute import get_codeword_of_message
+from isdclassic.utils.rectangular_codes_hardcoded import get_systematic_g
+from isdclassic.utils.rectangular_codes_compute import get_codeword_of_message
 
 
 class TestCode(ISDTest):

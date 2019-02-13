@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-from isd.utils import lu
+from isdclassic.utils import lu
 
 logger = logging.getLogger(__name__)
 

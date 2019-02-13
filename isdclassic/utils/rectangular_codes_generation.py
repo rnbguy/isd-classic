@@ -83,6 +83,24 @@ def generate_generator_matrix_from_systematic_h(h):
     return g
 
 
+# see ErrorCorrection1.pdf, page 44
+# if original h had (n, k, d), the new h will have(n+1, k+1, d*)
+# If original d is odd, than d*= d + 1
+# However, if systematic=True it's not assured that new d is d+1
+def add_overall_parity_bits_to_h(h, systematic=False):
+    r = h.shape[0]
+    n = h.shape[1]
+    k = n - r
+    ones_row = np.ones((1, n))
+    new_col = np.zeros((r + 1, 1))
+    new_col[r] = 1
+    h2 = np.concatenate((h, ones_row), axis=0)
+    h2 = np.concatenate((h2, new_col), axis=1)
+    if systematic:
+        h2[r] = (np.sum(h2, axis=0)) % 2
+    return h2
+
+
 # Useless, but useful insights
 def generate_parity_matrix_systematic_for_hamming(n, k, d=3):
     """
