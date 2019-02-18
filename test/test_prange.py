@@ -23,6 +23,7 @@ class ISDPrangeTest(ISDTest):
         ("n8_k4_d4_w1", 8, 4, 4, 1, False),
         ("n15_k11_d4_w1", 15, 11, 4, 1, True),
         ("n16_k12_d4_w1", 16, 12, 4, 1, False),
+        ("n8_k4_d4_w2", 8, 4, 4, 2, False),
         # SLOW
         # ("n16_k11_d7_w3", 16, 11, 7, 3, False),
         # SLOW, but correct

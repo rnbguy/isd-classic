@@ -22,6 +22,8 @@ def get_isd_systematic_parameters(n, k, d, w):
         return _get_7_4_3_w1()
     elif (n, k, d, w) == (8, 4, 4, 1):
         return _get_8_4_4_w1()
+    elif (n, k, d, w) == (8, 4, 4, 2):
+        return _get_8_4_4_w2()
     elif (n, k, d, w) == (15, 11, 4, 1):
         return _get_15_11_4_w1()
     elif (n, k, d, w) == (16, 11, 7, 3):
@@ -130,6 +132,33 @@ def _get_8_4_4_w1():
     ])
     w = 1
     isHamming = False
+    return h, g, syndromes, errors, w, isHamming
+
+
+# WARNING: this parity matrix is not checked and not at d=4, but returns
+# all the possible UNIQUE syndromes of the matrix with weight 2
+def _get_8_4_4_w2():
+    w = 2
+    g = None
+    isHamming = False
+    h = np.array([
+        [1, 0, 0, 1, 0, 0, 0, 0],
+        [0, 1, 1, 0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 1, 1],
+    ])
+    syndromes = np.array([
+        [1, 1, 1, 1],
+        [1, 0, 0, 0],
+        [1, 1, 1, 0],
+        [1, 0, 0, 1],
+    ])
+    errors = np.array([
+        [1, 1, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 1, 0],
+    ])
     return h, g, syndromes, errors, w, isHamming
 
 
