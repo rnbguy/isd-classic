@@ -17,13 +17,13 @@ class ISDPrangeTest(ISDTest):
         lee_logger.handlers = cls.logger.handlers
 
     @parameterized.expand([
-        # ("n4_k1_d4_w1_p1", 4, 1, 4, 1, 1, False),
-        # ("n7_k4_d3_w1_p1", 7, 4, 3, 1, 1, True),
-        # ("n7_k4_d3_w1_p1", 7, 4, 3, 1, 1, False),
-        # ("n8_k4_d4_w1_p1", 8, 4, 4, 1, 1, False),
-        # ("n15_k11_d4_w1_p1", 15, 11, 4, 1, 1, True),
-        # ("n16_k12_d4_w1_p1", 16, 12, 4, 1, 1, False),
-        # ("n8_k3_d4_w2_p1", 8, 3, 4, 2, 1, False),
+        ("n4_k1_d4_w1_p1", 4, 1, 4, 1, 1, False),
+        ("n7_k4_d3_w1_p1", 7, 4, 3, 1, 1, True),
+        ("n7_k4_d3_w1_p1", 7, 4, 3, 1, 1, False),
+        ("n8_k4_d4_w1_p1", 8, 4, 4, 1, 1, False),
+        ("n15_k11_d4_w1_p1", 15, 11, 4, 1, 1, True),
+        ("n16_k12_d4_w1_p1", 16, 12, 4, 1, 1, False),
+        ("n8_k3_d4_w2_p1", 8, 3, 4, 2, 1, False),
         ("n8_k4_d4_w2_p1", 8, 4, 4, 2, 2, False),
         # SLOW
         # ("n16_k11_d7_w3", 16, 11, 7, 3, 2, False),
@@ -48,8 +48,9 @@ class ISDPrangeTest(ISDTest):
             errors_p = errors
         for i, s in enumerate(syndromes):
             with self.subTest(h=h_p, s=s, w=w):
-                self.logger.debug("Launching with s = {0}".format(s))
-                e = lee_brickell.run(h_p, s, w, p)
+                self.logger.info("Launching subtest with s = {0}".format(s))
+                lee = lee_brickell.LeeBrickell(h_p, s, w, p)
+                e = lee.run()
                 self.logger.debug(
                     "For s = {0}, w = {1}, p = {2} h = \n{3}\nerror is {4}".
                     format(s, w, p, h_p, e))
