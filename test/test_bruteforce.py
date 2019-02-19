@@ -28,7 +28,8 @@ class ISDBruteforceTest(ISDTest):
         for i, s in enumerate(syndromes):
             with self.subTest(h=h_p, s=s, w=w):
                 self.logger.debug("Launching prange with s = {0}".format(s))
-                e = bruteforce.run(h_p, s, w)
+                bru = bruteforce.Bruteforce(h_p, s, w)
+                e = bru.run()
                 self.logger.debug(
                     "For s = {0}, w = 1, h = \n{1}\nerror is {2}".format(
                         s, h_p, e))

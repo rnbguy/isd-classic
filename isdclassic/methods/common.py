@@ -7,9 +7,10 @@ logger = logging.getLogger(__name__)
 
 
 class ISDWithoutLists():
+    ALG_BRUTEFORCE = 'bruteforce'
     ALG_PRANGE = 'prange'
     ALG_LEE_BRICKELL = 'lee_brickell'
-    ALG_ALL = [ALG_PRANGE, ALG_LEE_BRICKELL]
+    ALG_ALL = [ALG_BRUTEFORCE, ALG_PRANGE, ALG_LEE_BRICKELL]
 
     def __init__(self, h, s, t, alg_name):
         if alg_name not in self.ALG_ALL:
