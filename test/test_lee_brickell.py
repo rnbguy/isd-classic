@@ -12,9 +12,9 @@ class ISDPrangeTest(ISDTest):
         # Just to use prange logger
         ISDTest.setUpClass()
         import logging
-        lee_logger = logging.getLogger('isdclassic.methods.lee_brickell')
-        lee_logger.setLevel(cls.logger.level)
-        lee_logger.handlers = cls.logger.handlers
+        # lee_logger = logging.getLogger('isdclassic.methods.lee_brickell')
+        # lee_logger.setLevel(cls.logger.level)
+        # lee_logger.handlers = cls.logger.handlers
 
     @parameterized.expand([
         ("n4_k1_d4_w1_p1", 4, 1, 4, 1, 1, False),
@@ -35,8 +35,9 @@ class ISDPrangeTest(ISDTest):
         # second _ is the isHamming boolean value, not interested
         h, _, syndromes, errors, w, _ = rectangular_codes_hardcoded.get_isd_systematic_parameters(
             n, k, d, w)
-        self.logger.info("n = {0}, k = {1}, d = {2}, w = {3}".format(
-            n, k, d, w))
+        self.logger.info(
+            "Launching TEST w/ n = {0}, k = {1}, d = {2}, w = {3}".format(
+                n, k, d, w))
         self.logger.debug("h = \n{0}".format(h))
 
         if (scramble):
@@ -48,7 +49,7 @@ class ISDPrangeTest(ISDTest):
             errors_p = errors
         for i, s in enumerate(syndromes):
             with self.subTest(h=h_p, s=s, w=w):
-                self.logger.info("Launching subtest with s = {0}".format(s))
+                self.logger.info("Launching SUBTEST w/ s = {0}".format(s))
                 lee = lee_brickell.LeeBrickell(h_p, s, w, p)
                 e = lee.run()
                 self.logger.debug(
