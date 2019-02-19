@@ -11,10 +11,10 @@ class ISDPrangeTest(ISDTest):
     def setUpClass(cls):
         # Just to use prange logger
         ISDTest.setUpClass()
-        import logging
-        prange_isd_logger = logging.getLogger('isd.methods.prange')
-        prange_isd_logger.setLevel(cls.logger.level)
-        prange_isd_logger.handlers = cls.logger.handlers
+        # import logging
+        # prange_isd_logger = logging.getLogger('isdclassic.methods.prange')
+        # prange_isd_logger.setLevel(cls.logger.level)
+        # prange_isd_logger.handlers = cls.logger.handlers
 
     @parameterized.expand([
         ("n4_k1_d4_w1", 4, 1, 4, 1, False),
@@ -35,8 +35,9 @@ class ISDPrangeTest(ISDTest):
         # second _ is the isHamming boolean value, not interested
         h, _, syndromes, errors, w, _ = rectangular_codes_hardcoded.get_isd_systematic_parameters(
             n, k, d, w)
-        self.logger.info("n = {0}, k = {1}, d = {2}, w = {3}".format(
-            n, k, d, w))
+        self.logger.info(
+            "Launching TEST w/ n = {0}, k = {1}, d = {2}, w = {3}".format(
+                n, k, d, w))
         self.logger.debug("h = \n{0}".format(h))
 
         if (scramble):
@@ -48,8 +49,9 @@ class ISDPrangeTest(ISDTest):
             errors_p = errors
         for i, s in enumerate(syndromes):
             with self.subTest(h=h_p, s=s, w=w):
-                self.logger.debug("Launching prange with s = {0}".format(s))
-                e = prange.run(h_p, s, w)
+                self.logger.info("Launching SUBTEST w/ s = {0}".format(s))
+                pra = prange.Prange(h_p, s, w)
+                e = pra.run()
                 self.logger.debug(
                     "For s = {0}, w = 1, h = \n{1}\nerror is {2}".format(
                         s, h_p, e))

@@ -21,6 +21,8 @@ class ISDWithoutLists():
         self.r = h.shape[0]
         self.n = h.shape[1]
         self.k = self.n - self.r
+        logger.debug("*******")
+        logger.debug("s={0}, t={1}, H=\n{2}".format(self.s, self.t, self.h))
 
     @abstractmethod
     def run(self):
