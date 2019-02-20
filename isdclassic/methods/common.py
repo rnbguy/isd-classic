@@ -22,12 +22,18 @@ class ISDWithoutLists():
         self.r = h.shape[0]
         self.n = h.shape[1]
         self.k = self.n - self.r
+        self.result = {}
+        self.result['completed'] = False
         logger.debug("*******")
         logger.debug("s={0}, t={1}, H=\n{2}".format(self.s, self.t, self.h))
 
     @abstractmethod
     def run(self):
         pass
+
+    def get_result(self):
+        if self.result['completed']:
+            return self.result
 
     def get_matrix_rref(self):
         logger.debug("*******")

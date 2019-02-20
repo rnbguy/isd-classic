@@ -37,10 +37,16 @@ class Prange(ISDWithoutLists):
                 logger.info("perm is \n{0}".format(perm))
                 logger.info("u is \n{0}".format(u))
                 logger.info("hr, that is u.h.p is \n{0}".format(hr))
+                self.result['hr'] = hr
+                self.result['perm'] = perm
+                self.result['s_sign'] = s_sig
+                self.result['u'] = u
+                self.result['e_hat'] = e_hat
             else:
                 logger.debug("Weight is wrong, retrying")
 
         # return the error vector multiplying e_hat by the permutation matrix
         e = np.mod(np.dot(e_hat, perm.T), 2)
+        self.result['completed'] == True
         logger.info("s was {0}, e is {1}".format(self.s, e))
         return e
