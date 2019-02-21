@@ -25,23 +25,11 @@ class LeeBrickell(ISDWithoutLists):
             logger.debug("sum to s w is {}".format(sum_to_s_w))
             # return e_hat
             if sum_to_s_w == wanted_sum:
+                logger.debug("FOUND!! ")
                 e_hat = np.concatenate((np.zeros(self.k), sum_to_s))
                 logger.debug("e hat is {}".format(e_hat))
-                logger.debug("FOUND!! ")
                 for j in i:
-                    # a = [0] * (j - 1)
-                    # b = [1]
-                    # c = [0] * (n - len(a) - 1)
-                    # print(j)
-                    # print(a)
-                    # print(b)
-                    # print(c)
-                    # # e_hat += np.concatenate(([0] * (j - 1), [1], [0] * (n - j)))
-                    # e_hat += np.concatenate((a, b, c))
-                    # e_hat %= 2
                     e_hat[j] = 1
-                self.result['e_hat'] = e_hat
-                self.result['v'] = h_extr
                 self.result['indexes'] = i
                 logger.debug("e_hat is {}".format(e_hat))
                 return e_hat
@@ -59,13 +47,15 @@ class LeeBrickell(ISDWithoutLists):
         exit_condition = False
         while (not exit_condition):
             hr, u, perm, s_sig = self.get_matrix_rref()
-            self.result['hr'] = hr
-            self.result['perm'] = perm
-            self.result['s_sign'] = s_sig
-            self.result['u'] = u
             e_hat = self.bruteforce(hr, s_sig)
             if np.sum(e_hat) == self.t:
                 exit_condition = True
+        self.result['e_hat'] = e_hat
+        self.result['hr'] = hr
+        self.result['perm'] = perm
+        self.result['s_sig'] = s_sig
+        self.result['u'] = u
+        self.result['v'] = hr[:, 0:self.k]
         e = np.mod(np.dot(e_hat, perm.T), 2)
         self.result['completed'] = True
         return e

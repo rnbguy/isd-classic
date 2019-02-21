@@ -36,8 +36,8 @@ class ISDPrangeTest(ISDTest):
         h, _, syndromes, errors, w, _ = rectangular_codes_hardcoded.get_isd_systematic_parameters(
             n, k, d, w)
         self.logger.info(
-            "Launching TEST w/ n = {0}, k = {1}, d = {2}, w = {3}".format(
-                n, k, d, w))
+            "Launching TEST w/ n = {0}, k = {1}, d = {2}, w = {3}, p = {4}".
+            format(n, k, d, w, p))
         self.logger.debug("h = \n{0}".format(h))
 
         if (scramble):
