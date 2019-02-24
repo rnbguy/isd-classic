@@ -10,6 +10,8 @@ class LeeBrickell(ISDWithoutLists):
     def __init__(self, h, s, t, p):
         super().__init__(h, s, t, ISDWithoutLists.ALG_LEE_BRICKELL)
         self.p = p
+        assert self.k >= self.p, "k should be at least p, while k is {} and p is {}".format(
+            self.k, self.p)
 
     def bruteforce(self, hr, s_sig):
         wanted_sum = self.t - self.p
