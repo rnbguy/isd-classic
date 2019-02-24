@@ -17,9 +17,12 @@ class ISDPrangeTest(ISDTest):
         # prange_isd_logger.handlers = cls.logger.handlers
 
     @parameterized.expand([
+        # FAKE
+        ("n8_k1_d7_w3", 8, 7, 7, 3, True),
+        ("n8_k2_d5_w3", 8, 2, 5, 3, True),
         ("n4_k1_d4_w1", 4, 1, 4, 1, False),
+        # TRUE
         ("n7_k4_d3_w1", 7, 4, 3, 1, True),
-        ("n7_k4_d3_w1", 7, 4, 3, 1, False),
         ("n8_k4_d4_w1", 8, 4, 4, 1, False),
         ("n15_k11_d4_w1", 15, 11, 4, 1, True),
         ("n16_k12_d4_w1", 16, 12, 4, 1, False),
@@ -56,6 +59,9 @@ class ISDPrangeTest(ISDTest):
                     "For s = {0}, w = 1, h = \n{1}\nerror is {2}".format(
                         s, h_p, e))
                 np.testing.assert_array_almost_equal(e, errors_p[i])
+                if i > 20:
+                    self.logger.info("Breaking out, too many syndromes")
+                    break
 
 
 if __name__ == '__main__':
