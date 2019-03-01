@@ -15,6 +15,7 @@ class LeeBrickell(ISDWithoutLists):
 
     def bruteforce(self, hr, s_sig):
         wanted_sum = self.t - self.p
+        logger.debug('s_sig is {}, hrref is \n{}'.format(s_sig, hr))
         logger.debug("Wanted sum is {}".format(wanted_sum))
         for i in itertools.combinations(range(self.k), self.p):
             logger.debug("i is {}".format(i))
@@ -50,8 +51,12 @@ class LeeBrickell(ISDWithoutLists):
         while (not exit_condition):
             hr, u, perm, s_sig = self.get_matrix_rref()
             e_hat = self.bruteforce(hr, s_sig)
-            if np.sum(e_hat) == self.t:
+            if e_hat is None: # 
+                continue
+            else:
                 exit_condition = True
+        # Double check, but at this point it's always true
+        # if np.sum(e_hat) == self.t:
         self.result['e_hat'] = e_hat
         self.result['hr'] = hr
         self.result['perm'] = perm
