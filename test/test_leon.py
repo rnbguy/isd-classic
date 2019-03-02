@@ -31,7 +31,7 @@ class ISDLeonTest(ISDTest):
         ("n8_k1_d7_w3_p1_l1", 8, 1, 7, 3, 1, 1, True),
         ("n8_k4_d4_w1_p1_l2", 8, 4, 4, 1, 1, 2, True),
         ("n8_k4_d4_w1_p1_l3", 8, 4, 4, 1, 1, 3, True),
-        # TRUE
+        # # TRUE
         ("n4_k1_d4_w1_p1_l1", 4, 1, 4, 1, 1, 1, True),
         ("n4_k1_d4_w1_p1_l2", 4, 1, 4, 1, 1, 2, True),
         ("n4_k1_d4_w1_p1_l3", 4, 1, 4, 1, 1, 3, True),
@@ -50,21 +50,15 @@ class ISDLeonTest(ISDTest):
         ("n15_k11_d4_w1_p1_l1", 15, 11, 4, 1, 1, 1, True),
         ("n15_k11_d4_w1_p1_l2", 15, 11, 4, 1, 1, 2, True),
         ("n15_k11_d4_w1_p1_l3", 15, 11, 4, 1, 1, 3, True),
-        ("n15_k11_d4_w1_p2_l1", 15, 11, 4, 1, 2, 1, True),
-        ("n15_k11_d4_w1_p2_l2", 15, 11, 4, 1, 2, 2, True),
-        ("n15_k11_d4_w1_p2_l3", 15, 11, 4, 1, 2, 3, True),
-        ("n16_k12_d4_w1_p1_l1", 16, 12, 4, 1, 1, 1, True),
-        ("n16_k12_d4_w1_p1_l2", 16, 12, 4, 1, 1, 2, True),
-        ("n16_k12_d4_w1_p1_l3", 16, 12, 4, 1, 1, 3, True),
-        ("n16_k12_d4_w1_p2_l1", 16, 12, 4, 1, 2, 1, True),
-        ("n16_k12_d4_w1_p2_l2", 16, 12, 4, 1, 2, 2, True),
-        ("n16_k12_d4_w1_p2_l3", 16, 12, 4, 1, 2, 3, True),
-        ("n16_k12_d4_w1_p2_l3", 16, 12, 4, 1, 2, 4, True),
-        ("n16_k12_d4_w1_p2_l3", 16, 12, 4, 1, 2, 5, True),
-        ("n16_k12_d4_w1_p2_l3", 16, 12, 4, 1, 2, 6, True),
+        ("n15_k11_d4_w1_p1_l4", 15, 11, 4, 1, 1, 4, True),
+        ("n15_k11_d4_w1_p1_l5", 15, 11, 5, 1, 1, 4, True),
         # SLOW
-        # ("n16_k11_d7_w3", 16, 11, 7, 3, 2, False),
-        # ("n23_k12_d7_w3", 23, 12, 7, 3, 2, False),
+        ("n16_k11_d7_w3_p1_l2", 16, 11, 7, 3, 1, 2, False),
+        ("n16_k11_d7_w3_p2_l5", 16, 11, 7, 3, 2, 5, False),
+        ("n16_k11_d7_w3_p3_l7", 16, 11, 7, 3, 3, 7, False),
+        ("n23_k12_d7_w3_p1_l6", 23, 12, 7, 3, 1, 6, False),
+        ("n23_k12_d7_w3_p2_l10", 23, 12, 7, 3, 2, 10, False),
+        ("n23_k12_d7_w3_p3_l11", 23, 12, 7, 3, 3, 11, False),
     ])
     def test_h_s_d_w_p_l(self, name, n, k, d, w, p, l, scramble):
         # first _ is the G, we are not interested in it
@@ -76,13 +70,9 @@ class ISDLeonTest(ISDTest):
             .format(n, k, d, w, p, l))
         self.logger.debug("h = \n{0}".format(h))
 
-        if (scramble):
-            perm = np.random.permutation(np.eye(h.shape[1]))
-            h_p = np.dot(h, perm)
-            errors_p = np.dot(errors, perm)
-        else:
-            h_p = h
-            errors_p = errors
+        syndromes, errors = self.get_max_syndromes_errors(syndromes, errors)
+        h_p, errors_p = self.scramble_h_errors(
+            h, errors) if scramble else (h, errors)
         for i, s in enumerate(syndromes):
             with self.subTest(h=h_p, s=s, w=w, p=p, l=l):
                 self.logger.info("Launching SUBTEST w/ s = {0}".format(s))
@@ -92,9 +82,6 @@ class ISDLeonTest(ISDTest):
                     "For s = {0}, w = {1}, p = {2}, l = {5} h = \n{3}\nerror is {4}"
                     .format(s, w, p, h_p, e, l))
                 np.testing.assert_array_almost_equal(e, errors_p[i])
-                if i > 20:
-                    self.logger.info("Breaking out, too many syndromes")
-                    break
 
 
 if __name__ == '__main__':

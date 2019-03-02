@@ -18,20 +18,20 @@ class ISDPrangeTest(ISDTest):
 
     @parameterized.expand([
         # FAKE
-        ("n8_k1_d7_w3", 8, 7, 7, 3, True),
+        ("n8_k1_d7_w3", 8, 1, 7, 3, True),
         ("n8_k2_d5_w3", 8, 2, 5, 3, True),
-        ("n4_k1_d4_w1", 4, 1, 4, 1, False),
+        ("n8_k4_d4_w1", 8, 4, 4, 1, True),
         # TRUE
+        ("n4_k1_d4_w1", 4, 1, 4, 1, True),
         ("n7_k4_d3_w1", 7, 4, 3, 1, True),
-        ("n8_k4_d4_w1", 8, 4, 4, 1, False),
         ("n15_k11_d4_w1", 15, 11, 4, 1, True),
-        ("n16_k12_d4_w1", 16, 12, 4, 1, False),
-        ("n8_k2_d4_w2", 8, 3, 4, 2, False),
-        ("n8_k4_d4_w2", 8, 4, 4, 2, False),
+        ("n16_k12_d4_w1", 16, 12, 4, 1, True),
+        ("n8_k2_d4_w2", 8, 3, 4, 2, True),
+        ("n8_k4_d4_w2", 8, 4, 4, 2, True),
         # SLOW
-        # ("n16_k11_d7_w3", 16, 11, 7, 3, False),
+        ("n16_k11_d7_w3", 16, 11, 7, 3, False),
         # SLOW, but correct
-        # ("n23_k12_d7_w3", 23, 12, 7, 3, False),
+        ("n23_k12_d7_w3", 23, 12, 7, 3, False),
     ])
     def test_h_s_d_w(self, name, n, k, d, w, scramble):
         # first _ is the G, we are not interested in it
@@ -43,13 +43,9 @@ class ISDPrangeTest(ISDTest):
                 n, k, d, w))
         self.logger.debug("h = \n{0}".format(h))
 
-        if (scramble):
-            p = np.random.permutation(np.eye(h.shape[1]))
-            h_p = np.dot(h, p)
-            errors_p = np.dot(errors, p)
-        else:
-            h_p = h
-            errors_p = errors
+        syndromes, errors = self.get_max_syndromes_errors(syndromes, errors)
+        h_p, errors_p = self.scramble_h_errors(
+            h, errors) if scramble else (h, errors)
         for i, s in enumerate(syndromes):
             with self.subTest(h=h_p, s=s, w=w):
                 self.logger.info("Launching SUBTEST w/ s = {0}".format(s))
