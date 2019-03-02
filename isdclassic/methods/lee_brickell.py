@@ -10,6 +10,8 @@ class LeeBrickell(ISDWithoutLists):
     def __init__(self, h, s, t, p):
         super().__init__(h, s, t, ISDWithoutLists.ALG_LEE_BRICKELL)
         self.p = p
+        assert self.p >= 0 and self.p <= self.t, "p should be between 0 and t, while p is {}".format(
+            p)
         assert self.k >= self.p, "k should be at least p, while k is {} and p is {}".format(
             self.k, self.p)
 
@@ -51,7 +53,7 @@ class LeeBrickell(ISDWithoutLists):
         while (not exit_condition):
             hr, u, perm, s_sig = self.get_matrix_rref()
             e_hat = self.bruteforce(hr, s_sig)
-            if e_hat is None: # 
+            if e_hat is None:  #
                 continue
             else:
                 exit_condition = True
