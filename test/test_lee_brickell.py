@@ -15,31 +15,27 @@ class ISDLeeBrickellTest(ISDTest):
         lee_logger = logging.getLogger('isdclassic.methods.lee_brickell')
         lee_logger.setLevel(cls.logger.level)
         lee_logger.handlers = cls.logger.handlers
+        return
         lee_logger = logging.getLogger('isdclassic.utils.lu')
         lee_logger.setLevel(cls.logger.level)
         lee_logger.handlers = cls.logger.handlers
 
     @parameterized.expand([
         # FAKE
-        ("n8_k2_d5_w3_p1", 8, 2, 5, 3, 1, True),
-        ("n8_k2_d5_w3_p2", 8, 2, 5, 3, 2, True),
-        ("n8_k1_d7_w3_p1", 8, 1, 7, 3, 1, True),
-        ("n8_k4_d4_w1_p1", 8, 4, 4, 1, 1, True),
+        # ("n8_k2_d5_w3_p1", 8, 2, 5, 3, 1, True),
+        # ("n8_k2_d5_w3_p2", 8, 2, 5, 3, 2, True),
+        # ("n8_k1_d7_w3_p1", 8, 1, 7, 3, 1, True),
+        # ("n8_k3_d4_w2_p1", 8, 3, 4, 2, 1, True),
+        ("n8_k4_d4_w2_p1", 8, 4, 4, 2, 1, True),
+        ("n8_k4_d4_w2_p2", 8, 4, 4, 2, 2, True),
         # # TRUE
         ("n4_k1_d4_w1_p1", 4, 1, 4, 1, 1, True),
         ("n7_k4_d3_w1_p1", 7, 4, 3, 1, 1, True),
-        ("n8_k3_d4_w2_p1", 8, 3, 4, 2, 1, True),
-        ("n8_k4_d4_w2_p1", 8, 4, 4, 2, 1, True),
-        ("n8_k4_d4_w2_p2", 8, 4, 4, 2, 2, True),
-        ("n15_k11_d4_w1_p1", 15, 11, 4, 1, 1, True),
-        ("n16_k12_d4_w1_p1", 16, 12, 4, 1, 1, True),
-        # SLOW
-        ("n16_k11_d7_w3_p1", 16, 11, 7, 3, 1, False),
-        ("n16_k11_d7_w3_p2", 16, 11, 7, 3, 2, False),
-        ("n16_k11_d7_w3_p3", 16, 11, 7, 3, 3, False),
+        ("n8_k4_d4_w1_p1", 8, 4, 4, 1, 1, True),
+        ("n15_k11_d3_w1_p1", 15, 11, 3, 1, 1, True),
+        ("n16_k11_d4_w1_p1", 16, 11, 4, 1, 1, True),
         ("n23_k12_d7_w3_p1", 23, 12, 7, 3, 1, False),
         ("n23_k12_d7_w3_p2", 23, 12, 7, 3, 2, False),
-        ("n23_k12_d7_w3_p3", 23, 12, 7, 3, 3, False),
     ])
     def test_h_s_d_w_p(self, name, n, k, d, w, p, scramble):
         # first _ is the G, we are not interested in it

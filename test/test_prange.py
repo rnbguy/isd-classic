@@ -18,19 +18,17 @@ class ISDPrangeTest(ISDTest):
 
     @parameterized.expand([
         # FAKE
-        ("n8_k1_d7_w3", 8, 1, 7, 3, True),
-        ("n8_k2_d5_w3", 8, 2, 5, 3, True),
-        ("n8_k4_d4_w1", 8, 4, 4, 1, True),
+        # ("n8_k1_d7_w3", 8, 1, 7, 3, True),
+        # ("n8_k2_d5_w3", 8, 2, 5, 3, True),
+        # PARTIAL UNIQUENESS
+        # ("n8_k2_d4_w2", 8, 2, 4, 2, True),
+        ("n8_k4_d4_w2", 8, 4, 4, 2, True),
         # TRUE
         ("n4_k1_d4_w1", 4, 1, 4, 1, True),
         ("n7_k4_d3_w1", 7, 4, 3, 1, True),
-        ("n15_k11_d4_w1", 15, 11, 4, 1, True),
-        ("n16_k12_d4_w1", 16, 12, 4, 1, True),
-        ("n8_k2_d4_w2", 8, 3, 4, 2, True),
-        ("n8_k4_d4_w2", 8, 4, 4, 2, True),
-        # SLOW
-        ("n16_k11_d7_w3", 16, 11, 7, 3, False),
-        # SLOW, but correct
+        ("n8_k4_d4_w1", 8, 4, 4, 1, True),
+        ("n15_k11_d3_w1", 15, 11, 3, 1, True),
+        ("n16_k11_d4_w1", 16, 11, 4, 1, True),
         ("n23_k12_d7_w3", 23, 12, 7, 3, False),
     ])
     def test_h_s_d_w(self, name, n, k, d, w, scramble):
