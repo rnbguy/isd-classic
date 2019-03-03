@@ -16,8 +16,10 @@ class Leon(ISDWithoutLists):
         assert self.k >= self.p, "k should be at least p, while k is {} and p is {}".format(
             self.k, self.p)
         #TODO assert on l
-        assert self.l >= 0 and self.l <= self.r, "l should be between 0 and r, while r is {}".format(
-            l)
+        # Bcz we want l 0's and t-p 1's in the last r positions
+        assert self.l >= 0 and self.l + (
+            self.t - self.p
+        ) <= self.r, "l should be between 0 and r, while r is {}".format(l)
 
     def bruteforce(self, hr, s_sig):
         wanted_sum_up = 0
