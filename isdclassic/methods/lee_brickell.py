@@ -27,7 +27,8 @@ class LeeBrickell(ISDWithoutLists):
             sum_to_s = (h_extr.sum(axis=1) + s_sig) % 2
             logger.debug("sum to s is {}".format(sum_to_s))
             sum_to_s_w = np.sum(sum_to_s)
-            logger.debug("sum to s w is {}".format(sum_to_s_w))
+            logger.debug("sum to s w is {}, wanted {}".format(
+                sum_to_s_w, wanted_sum))
             # return e_hat
             if sum_to_s_w == wanted_sum:
                 logger.debug("FOUND!! ")

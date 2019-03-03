@@ -28,14 +28,15 @@ class Leon(ISDWithoutLists):
             # extract only the columns indexed by i, matrix to ensure that it is a matrix
             # and not an array
             h_extr = hr[:, i]
-            logger.debug("h extr is {}".format(h_extr))
+            logger.debug("h extr is \n{}".format(h_extr))
             # sum the columns by rows
             h_extr_up = h_extr[:self.l, :]
-            logger.debug("h extr up is {}".format(h_extr_up))
+            logger.debug("h extr up is \n{}".format(h_extr_up))
             sum_to_s_up = (h_extr_up.sum(axis=1) + s_sig[:self.l]) % 2
             logger.debug("sum to s up is {}".format(sum_to_s_up))
             sum_to_s_up_w = np.sum(sum_to_s_up)
-            logger.debug("sum to s up weight is {}".format(sum_to_s_up_w))
+            logger.debug("sum to s up weight is {}, wanted {}".format(
+                sum_to_s_up_w, wanted_sum_up))
             # return e_hat
             # if sum_to_s_w == wanted_sum:
             if sum_to_s_up_w == wanted_sum_up:
@@ -44,9 +45,10 @@ class Leon(ISDWithoutLists):
                 sum_to_s_down = (h_extr_down.sum(axis=1) + s_sig[self.l:]) % 2
                 logger.debug("sum to s down is {}".format(sum_to_s_down))
                 sum_to_s_down_w = np.sum(sum_to_s_down)
-                logger.debug(
-                    "sum to s down weight is {}".format(sum_to_s_down_w))
+                logger.debug("sum to s down weight is {}, wanted {}".format(
+                    sum_to_s_down_w, wanted_sum_down))
                 if sum_to_s_down_w == wanted_sum_down:
+                    logger.debug("FOUND!! ")
                     e_hat = np.concatenate((np.zeros(self.k), sum_to_s_up,
                                             sum_to_s_down))
                     logger.debug("e hat before for is {}".format(e_hat))
