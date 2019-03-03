@@ -10,7 +10,7 @@ class ISDPrangeTest(ISDTest):
     @classmethod
     def setUpClass(cls):
         # Just to use prange logger
-        ISDTest.setUpClass()
+        super().setUpClass()
         # import logging
         # prange_isd_logger = logging.getLogger('isdclassic.methods.prange')
         # prange_isd_logger.setLevel(cls.logger.level)

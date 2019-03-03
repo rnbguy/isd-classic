@@ -10,7 +10,7 @@ class ISDLeeBrickellTest(ISDTest):
     @classmethod
     def setUpClass(cls):
         # Just to use prange logger
-        ISDTest.setUpClass()
+        super().setUpClass()
         import logging
         lee_logger = logging.getLogger('isdclassic.methods.lee_brickell')
         lee_logger.setLevel(cls.logger.level)

@@ -9,8 +9,8 @@ from isdclassic.utils import rectangular_codes_hardcoded
 class ISDLeonTest(ISDTest):
     @classmethod
     def setUpClass(cls):
-        # Just to use prange logger
-        ISDTest.setUpClass()
+        # Just to use leon logger also
+        super().setUpClass()
         import logging
         lee_logger = logging.getLogger('isdclassic.methods.leon')
         lee_logger.setLevel(cls.logger.level)
