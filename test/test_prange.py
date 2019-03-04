@@ -11,10 +11,30 @@ class ISDPrangeTest(ISDTest):
     def setUpClass(cls):
         # Just to use prange logger
         super().setUpClass()
+        print(cls.SLOW)
+        print(cls.FAKE)
         # import logging
         # prange_isd_logger = logging.getLogger('isdclassic.methods.prange')
         # prange_isd_logger.setLevel(cls.logger.level)
         # prange_isd_logger.handlers = cls.logger.handlers
+
+    @parameterized.expand([
+        # TRUE
+        ("n4_k1_d4_w1", 4, 1, 4, 1, True),
+        ("n7_k4_d3_w1", 7, 4, 3, 1, True),
+        ("n8_k4_d4_w1", 8, 4, 4, 1, True),
+        ("n15_k11_d3_w1", 15, 11, 3, 1, True),
+        ("n16_k11_d4_w1", 16, 11, 4, 1, True),
+    ])
+    def test_simple_h_s_d_w(self, name, n, k, d, w, scramble):
+        self.common(name, n, k, d, w, scramble)
+
+    @parameterized.expand([
+        ("n23_k12_d7_w3", 23, 12, 7, 3, False),
+    ])
+    @unittest.skipIf(not ISDTest.SLOW, "Skipped slow test")
+    def test_slow_h_s_d_w(self, name, n, k, d, w, scramble):
+        self.common(name, n, k, d, w, scramble)
 
     @parameterized.expand([
         # FAKE
@@ -23,15 +43,12 @@ class ISDPrangeTest(ISDTest):
         # PARTIAL UNIQUENESS
         # ("n8_k2_d4_w2", 8, 2, 4, 2, True),
         ("n8_k4_d4_w2", 8, 4, 4, 2, True),
-        # TRUE
-        ("n4_k1_d4_w1", 4, 1, 4, 1, True),
-        ("n7_k4_d3_w1", 7, 4, 3, 1, True),
-        ("n8_k4_d4_w1", 8, 4, 4, 1, True),
-        ("n15_k11_d3_w1", 15, 11, 3, 1, True),
-        ("n16_k11_d4_w1", 16, 11, 4, 1, True),
-        ("n23_k12_d7_w3", 23, 12, 7, 3, False),
     ])
-    def test_h_s_d_w(self, name, n, k, d, w, scramble):
+    @unittest.skipIf(not ISDTest.FAKE, "Skipped fake test")
+    def test_fake_h_s_d_w(self, name, n, k, d, w, scramble):
+        self.common(name, n, k, d, w, scramble)
+
+    def common(self, name, n, k, d, w, scramble):
         # first _ is the G, we are not interested in it
         # second _ is the isHamming boolean value, not interested
         h, _, syndromes, errors, w, _ = rectangular_codes_hardcoded.get_isd_systematic_parameters(

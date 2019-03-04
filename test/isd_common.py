@@ -9,6 +9,8 @@ from datetime import datetime
 
 class ISDTest(unittest.TestCase):
     MAX_N_SYNDROMES = 20
+    SLOW = int(os.getenv('SLOW', '0'))
+    FAKE = int(os.getenv('FAKE', '0'))
 
     def setUp(self):
         self._started_at = time.time()
