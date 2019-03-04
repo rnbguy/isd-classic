@@ -39,12 +39,15 @@ class ISDLeeBrickellTest(ISDTest):
         self.common(name, n, k, d, w, p, scramble)
 
     @parameterized.expand([
-        # ("n8_k2_d5_w3_p1", 8, 2, 5, 3, 1, True),
-        # ("n8_k2_d5_w3_p2", 8, 2, 5, 3, 2, True),
-        # ("n8_k1_d7_w3_p1", 8, 1, 7, 3, 1, True),
-        # ("n8_k3_d4_w2_p1", 8, 3, 4, 2, 1, True),
+        # Quantum reference
         ("n8_k4_d4_w2_p1", 8, 4, 4, 2, 1, True),
         ("n8_k4_d4_w2_p2", 8, 4, 4, 2, 2, True),
+        # Slow bcz k low & p high, unlikely to have the condition satisfied
+        ("n8_k3_d4_w2_p1", 8, 3, 4, 2, 1, True),
+        ("n8_k2_d5_w3_p1", 8, 2, 5, 3, 1, True),
+        ("n8_k2_d5_w3_p2", 8, 2, 5, 3, 2, True),
+        # Very slow
+        ("n8_k1_d7_w3_p1", 8, 1, 7, 3, 1, True),
     ])
     @unittest.skipIf(not ISDTest.FAKE, "Skipped fake test")
     def test_fake_h_s_d_w_p(self, name, n, k, d, w, p, scramble):

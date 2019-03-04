@@ -11,8 +11,6 @@ class ISDPrangeTest(ISDTest):
     def setUpClass(cls):
         # Just to use prange logger
         super().setUpClass()
-        print(cls.SLOW)
-        print(cls.FAKE)
         # import logging
         # prange_isd_logger = logging.getLogger('isdclassic.methods.prange')
         # prange_isd_logger.setLevel(cls.logger.level)
@@ -37,12 +35,14 @@ class ISDPrangeTest(ISDTest):
         self.common(name, n, k, d, w, scramble)
 
     @parameterized.expand([
-        # FAKE
-        # ("n8_k1_d7_w3", 8, 1, 7, 3, True),
-        # ("n8_k2_d5_w3", 8, 2, 5, 3, True),
-        # PARTIAL UNIQUENESS
-        # ("n8_k2_d4_w2", 8, 2, 4, 2, True),
+        # Quantum reference
         ("n8_k4_d4_w2", 8, 4, 4, 2, True),
+        ("n8_k4_d4_w2", 8, 3, 4, 2, True),
+        # Slow bcz k low, unlikely to have the condition satisfied
+        # However, faster than leon and lee
+        ("n8_k3_d4_w2", 8, 3, 4, 2, True),
+        ("n8_k2_d5_w3", 8, 2, 5, 3, True),
+        ("n8_k1_d7_w3", 8, 1, 7, 3, True),
     ])
     @unittest.skipIf(not ISDTest.FAKE, "Skipped fake test")
     def test_fake_h_s_d_w(self, name, n, k, d, w, scramble):

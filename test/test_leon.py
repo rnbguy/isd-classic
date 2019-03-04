@@ -50,23 +50,26 @@ class ISDLeonTest(ISDTest):
         self.common(name, n, k, d, w, p, l, scramble)
 
     @parameterized.expand([
+        # Quantum reference
         ("n8_k4_d4_w2_p1_l1", 8, 4, 4, 2, 1, 1, True),
         ("n8_k4_d4_w2_p1_l2", 8, 4, 4, 2, 1, 2, True),
         ("n8_k4_d4_w2_p1_l3", 8, 4, 4, 2, 1, 3, True),
         ("n8_k4_d4_w2_p2_l1", 8, 4, 4, 2, 2, 1, True),
         ("n8_k4_d4_w2_p2_l2", 8, 4, 4, 2, 2, 2, True),
         ("n8_k4_d4_w2_p2_l3", 8, 4, 4, 2, 2, 3, True),
-        # Problematic ?
-        # ("n8_k2_d5_w3_p1_l1", 8, 2, 5, 3, 1, 1, True),
+        # Slow bcz k low & l,p high, unlikely to have the condition satisfied
+        ("n8_k3_d4_w2_p1_l1", 8, 3, 4, 2, 1, 1, True),
+        ("n8_k3_d4_w2_p1_l2", 8, 3, 4, 2, 1, 2, True),
+        ("n8_k3_d4_w2_p1_l3", 8, 3, 4, 2, 1, 3, True),
+        # Slower for the same reasons, but after some time test passes
+        ("n8_k2_d5_w3_p1_l1", 8, 2, 5, 3, 1, 1, True),
+        ("n8_k2_d5_w3_p2_l1", 8, 2, 5, 3, 2, 1, True),
+        ("n8_k1_d7_w3_p1_l1", 8, 1, 7, 3, 1, 1, True),
+        # More than unlikely, in this case it seems the conditions are never satisfied
         # ("n8_k2_d5_w3_p1_l2", 8, 2, 5, 3, 1, 2, True),
         # ("n8_k2_d5_w3_p1_l3", 8, 2, 5, 3, 1, 3, True),
-        # ("n8_k2_d5_w3_p2_l1", 8, 2, 5, 3, 2, 1, True),
         # ("n8_k2_d5_w3_p2_l2", 8, 2, 5, 3, 2, 2, True),
         # ("n8_k2_d5_w3_p2_l3", 8, 2, 5, 3, 2, 3, True),
-        # ("n8_k1_d7_w3_p1_l1", 8, 1, 7, 3, 1, 1, True),
-        # ("n8_k3_d4_w2_p1_l1", 8, 3, 4, 2, 1, 1, True),
-        # ("n8_k3_d4_w2_p1_l2", 8, 3, 4, 2, 1, 2, True),
-        # ("n8_k3_d4_w2_p1_l3", 8, 3, 4, 2, 1, 3, True),
     ])
     @unittest.skipIf(not ISDTest.FAKE, "Skipped fake test")
     def test_fake_h_s_d_w_p_l(self, name, n, k, d, w, p, l, scramble):
