@@ -19,4 +19,5 @@ class Bruteforce(ISDWithoutLists):
             if np.array_equal(h_extr.sum(axis=1) % 2, self.s):
                 for j in i:
                     error[j] = 1
+                self.result['indexes'] = i
                 return error
