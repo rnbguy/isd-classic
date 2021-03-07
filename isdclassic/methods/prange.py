@@ -1,13 +1,17 @@
+import itertools
 import logging
+
 import numpy as np
+
 from isdclassic.methods.common import ISDWithoutLists
+
 
 logger = logging.getLogger(__name__)
 
 
 class Prange(ISDWithoutLists):
-    def __init__(self, h, s, t):
-        super().__init__(h, s, t, ISDWithoutLists.ALG_PRANGE)
+    def __init__(self, h, s, t, rref_mode):
+        super().__init__(h, s, t, ISDWithoutLists.ALG_PRANGE, rref_mode)
 
     def run(self):
         """Run the isd algorithm
@@ -19,12 +23,16 @@ class Prange(ISDWithoutLists):
         :rtype: numpy.array
 
         """
-
         # From now on exit_condition_weight is used to continue the algorithm until we found
         # the right weight for the error
         exit_condition_weight = False
+
+        if self.rref_mode == "preselect":
+            comb = itertools.combinations(range(self.n), self.r)
+        else:
+            comb=None
         while (not exit_condition_weight):
-            hr, u, perm, s_sig = self.get_matrix_rref()
+            hp, hr, u, perm, s_sig = self.get_matrix_rref(comb=comb)
             t_hat = np.sum(s_sig)
             logger.debug("Weight of s is {0}".format(t_hat))
             exit_condition_weight = t_hat == self.t
@@ -36,17 +44,21 @@ class Prange(ISDWithoutLists):
                 logger.info("e hat is {0}".format(e_hat))
                 logger.info("perm is \n{0}".format(perm))
                 logger.info("u is \n{0}".format(u))
+                logger.info("hp, that is h.p is \n{0}".format(hp))
                 logger.info("hr, that is u.h.p is \n{0}".format(hr))
-                self.result['hr'] = hr
+                self.result['h'] = self.h
+                self.result['s'] = self.s
                 self.result['perm'] = perm
-                self.result['s_sign'] = s_sig
+                self.result['hp'] = hp
                 self.result['u'] = u
+                self.result['hr'] = hr
+                self.result['s_sign'] = s_sig
                 self.result['e_hat'] = e_hat
             else:
                 logger.debug("Weight is wrong, retrying")
 
         # return the error vector multiplying e_hat by the permutation matrix
         e = np.mod(np.dot(e_hat, perm.T), 2)
-        self.result['completed'] == True
+        self.result['completed'] = True
         logger.info("s was {0}, e is {1}".format(self.s, e))
         return e
