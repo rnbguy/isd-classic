@@ -27,12 +27,15 @@ class Prange(ISDWithoutLists):
         # the right weight for the error
         exit_condition_weight = False
 
-        if self.rref_mode == "preselect":
-            comb = itertools.combinations(range(self.n), self.r)
-        else:
-            comb=None
+        args = {}
+        if self.rref_mode == self.RREF_MODES[1]:
+            args['comb'] = itertools.combinations(range(self.n), self.r)
+        elif self.rref_mode == self.RREF_MODES[2]:
+            iden = np.eye(self.n)
+            args['perm'] = itertools.permutations(iden)
+        i = 0
         while (not exit_condition_weight):
-            hp, hr, u, perm, s_sig = self.get_matrix_rref(comb=comb)
+            hp, hr, u, perm, s_sig = self.get_matrix_rref(**args)
             t_hat = np.sum(s_sig)
             logger.debug("Weight of s is {0}".format(t_hat))
             exit_condition_weight = t_hat == self.t
@@ -54,8 +57,10 @@ class Prange(ISDWithoutLists):
                 self.result['hr'] = hr
                 self.result['s_sign'] = s_sig
                 self.result['e_hat'] = e_hat
+                self.result['n_iters'] = i
             else:
                 logger.debug("Weight is wrong, retrying")
+            i += 1
 
         # return the error vector multiplying e_hat by the permutation matrix
         e = np.mod(np.dot(e_hat, perm.T), 2)

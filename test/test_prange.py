@@ -61,18 +61,18 @@ class ISDPrangeTest(ISDTest):
         syndromes, errors = self.get_max_syndromes_errors(syndromes, errors)
         h_p, errors_p = self.scramble_h_errors(
             h, errors) if scramble else (h, errors)
-        for i, s in enumerate(syndromes):
-            with self.subTest(h=h_p, s=s, w=w):
-                self.logger.info("Launching SUBTEST w/ s = {0}".format(s))
-                pra = prange.Prange(h_p, s, w, "standard")
-                e = pra.run()
-                self.logger.debug(
-                    "For s = {0}, w = 1, h = \n{1}\nerror is {2}".format(
-                        s, h_p, e))
-                np.testing.assert_array_almost_equal(e, errors_p[i])
-                if i > 20:
-                    self.logger.info("Breaking out, too many syndromes")
-                    break
+        # We avoid the iterpermutations (slow) if slow test is off
+        max_mode_idx = 3 if ISDTest.SLOW else 2
+        for rref_mode in prange.Prange.RREF_MODES[:max_mode_idx]:
+            for i, s in enumerate(syndromes):
+                with self.subTest(rref_mode=rref_mode, h=h_p, s=s, w=w):
+                    self.logger.info("Launching SUBTEST w/ s = {0}".format(s))
+                    pra = prange.Prange(h_p, s, w, rref_mode)
+                    e = pra.run()
+                    self.logger.debug(
+                        "For s = {0}, w = 1, h = \n{1}\nerror is {2}".format(
+                            s, h_p, e))
+                    np.testing.assert_array_almost_equal(e, errors_p[i])
 
 
 if __name__ == '__main__':

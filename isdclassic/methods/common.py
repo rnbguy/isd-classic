@@ -14,9 +14,13 @@ class ISDWithoutLists():
     ALG_LEON = 'leon'
     ALG_ALL = [ALG_BRUTEFORCE, ALG_PRANGE, ALG_LEE_BRICKELL, ALG_LEON]
 
-    def __init__(self, h, s, t, alg_name, rref_mode="standard"):
+    RREF_MODES = ['random', 'itercombinations', 'iterpermutations']
+
+    def __init__(self, h, s, t, alg_name, rref_mode="random"):
         if alg_name not in self.ALG_ALL:
             raise Exception("Algorithm name undefined")
+        if rref_mode not in self.RREF_MODES:
+            raise Exception("Rref mode undefined")
         self.h = h
         self.s = s
         self.t = t
@@ -52,17 +56,56 @@ class ISDWithoutLists():
 
     @classmethod
     def get_rref(cls, h, mode, **kwargs):
-        if mode == "standard":
-            return cls.get_rref_std(h, **kwargs)
-        elif mode == "preselect":
-            return cls.get_rref_pre(h, **kwargs)
+        if mode == cls.RREF_MODES[0]:
+            return cls.get_rref_random(h, **kwargs)
+        elif mode == cls.RREF_MODES[1]:
+            return cls.get_rref_itercombinations(h, **kwargs)
+        elif mode == cls.RREF_MODES[2]:
+            return cls.get_rref_iterpermutations(h, **kwargs)
 
     @classmethod
-    def get_rref_pre(cls, h, **kwargs):
+    def get_rref_iterpermutations(cls, h, **kwargs):
+        """It expects kwargs['perm] containing the next permutations of the columns of
+        an identity matrix. The idea is to iterate through all the possible
+        permutations of the columns of a generic identity matrix. This may be
+        slower than the random method since now the permuation are
+        deterministic and not random.
+
+        """
+        for rows in kwargs['perm']:
+            logger.debug(f"rows {rows}")
+            perm = np.vstack(rows)
+            hp = h @ perm % 2
+            # hr stands for the matrix put in RREF, u for the transformation matrix
+            # applied to obtain the RREF from the original matrix
+            # We are trying to get the RREF of hp with the identity matrix r x r
+            # placed to the right of hp
+            hr, u = cls._rref(hp)
+            # If rref returns None, it means that reduction was not possible,
+            # i.e. the rightmost r x r matrix is not full-rank (different from
+            # the id matrix in our case.
+            exit_condition_rref = not (all(item is None for item in (hr, u)))
+            # input("c")
+            logger.debug("perm is \n{0}".format(perm))
+            logger.debug("hr, that is u.h.p is \n{0}".format(hr))
+            logger.debug("u is \n{0}".format(u))
+            if exit_condition_rref:
+                logger.debug(
+                    "EXIT CONDITION RREF IS TRUE, GOING TO CHECK WEIGHT")
+                return hp, hr, u, perm
+            else:
+                logger.debug("exit condition rref is false, retrying")
+        raise Exception("Impossible to have the RREF")
+
+
+    @classmethod
+    def get_rref_itercombinations(cls, h, **kwargs):
+        """The idea is to select the information set in advance and then \"compose\"
+        the permuation matrix starting from it. So if we have an rxn = 7x4 H
+        matrix and we choose I = {1, 3, 5, 6}, the permuted H will have the
+        columns in this order: [0, 2, 4, 1, 3, 5, 6].
+        """
         # Trying to permute and then obtain the RREF
-        exit_condition_rref = False
-        # From now on exit_condition_rref is used to continue the algorithm until we found
-        # the right rref, i.e. having the identity matrix on the right
         for cols in kwargs['comb']:
             logger.debug(f"cols {cols}")
             missing = tuple(set(range(h.shape[1])) - set(cols))
@@ -88,9 +131,17 @@ class ISDWithoutLists():
                 return hp, hr, u, perm
             else:
                 logger.debug("exit condition rref is false, retrying")
+        raise Exception("Impossible to have the RREF")
 
     @classmethod
-    def get_rref_std(cls, h, **kwargs):
+    def get_rref_random(cls, h, **kwargs):
+        """The idea here is to apply a random permutation matrix to the original H and
+        then do a RREF on it. Note however that, being the permuation random,
+        it may be costly since there are different permutations matrices giving
+        the same information set. Also, being random, we may have the same
+        permutation multiple times.
+
+        """
         # Trying to permute and then obtain the RREF
         exit_condition_rref = False
         hp, hr, u, perm = None, None, None, None
