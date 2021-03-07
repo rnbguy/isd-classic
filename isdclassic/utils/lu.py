@@ -83,11 +83,11 @@ def _ref(u, square, square_start, ltot, ptot, mod):
 
         # Checking if there are 0's on the diagonal, if so try to swap the row
         # containing the zero with one of the rows below it
-        exc_row = i + 1
+        exc_row = i - square_start + 1
         while (u[i - square_start][i] == 0):
             _logger.debug(
-                "found a 0 on diagonal at i,j = {0}, trying to swap rows {0} with one of the rows below"
-                .format(i))
+                "found a 0 on diagonal at i,j = {0}{1}, trying to swap rows {0} with {2}"
+                .format(i-square_start, i, exc_row))
             # revert back u and p at their original states at each iteration
             # First time it's useless
             u = np.dot(p.T, u)
@@ -103,7 +103,7 @@ def _ref(u, square, square_start, ltot, ptot, mod):
             # p = np.random.permutation(p)
             # u = np.dot(p, u)
             # However, we should only swap the ones below i
-            p[[i, exc_row]] = p[[exc_row, i]]
+            p[[i - square_start, exc_row]] = p[[exc_row, i - square_start]]
             u = np.dot(p, u)
             exc_row += 1
             _logger.debug("Permuted U = \n{0}\n".format(u))
