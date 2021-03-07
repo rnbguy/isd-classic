@@ -53,6 +53,8 @@ class LeeBrickell(ISDWithoutLists):
         exit_condition = False
         while (not exit_condition):
             hr, u, perm, s_sig = self.get_matrix_rref()
+            # print(hr)
+            # input("b")
             e_hat = self.bruteforce(hr, s_sig)
             if e_hat is None:  #
                 continue

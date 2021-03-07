@@ -1,10 +1,11 @@
+import inspect
 import logging
 import os
-import unittest
-import numpy as np
-import inspect
 import time
+import unittest
 from datetime import datetime
+
+import numpy as np
 
 
 class ISDTest(unittest.TestCase):
@@ -29,8 +30,8 @@ class ISDTest(unittest.TestCase):
         cls.fileName = os.path.splitext(os.path.basename(cur_file))[0]
         cls.moduleName = os.path.splitext(cur_file)[0]
         if (os.getenv('LOG_LEVEL')):
-            logging_level = logging._nameToLevel.get(
-                os.getenv('LOG_LEVEL'), logging.info)
+            logging_level = logging._nameToLevel.get(os.getenv('LOG_LEVEL'),
+                                                     logging.info)
             # stream_handler = logging.StreamHandler()
             # stream_handler_formatter = logging.Formatter(
             #     '%(asctime)s %(levelname)-8s %(name)-12s %(funcName)-12s %(message)s'
@@ -58,6 +59,8 @@ class ISDTest(unittest.TestCase):
 
     @classmethod
     def scramble_h_errors(cls, h, errors):
+        """The idea is to scramble the errors in order to have a random test of all
+        the possible syndrome-error pairs."""
         perm = np.random.permutation(np.eye(h.shape[1]))
         h_p = np.dot(h, perm)
         errors_p = np.dot(errors, perm)

@@ -97,7 +97,7 @@ def _get_4_1_4_w1():
     h = get_systematic_h(4, 1, 4)
     g = get_systematic_g(4, 1, 4)
     isHamming = False
-    syndromes = np.array([[1, 1, 1], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    syndromes = np.array([[1, 1, 1], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.ubyte)
     errors = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
     w = 1
     return h, g, syndromes, errors, w, isHamming
@@ -651,7 +651,7 @@ def _get_23_12_7_systematic_g():
 #### SYSTEMATIC H
 ################################
 def _get_4_1_4_systematic_h():
-    h = np.array([[1, 1, 1], [1, 0, 0], [0, 1, 0], [0, 0, 1]]).T
+    h = np.array([[1, 1, 1], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.ubyte).T
     return h
 
 
