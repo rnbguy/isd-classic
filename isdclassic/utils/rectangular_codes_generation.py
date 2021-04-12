@@ -12,22 +12,8 @@ def _assert_hamming(n, k, d=3):
     assert n == 2**r - 1, assert_msg
 
 
-def generate_parity_matrix_nonsystematic_for_hamming(n, k, d=3):
-    """
-    This only works for Hamming codes, i.e. codes in the form
-    [2^m - 1, 2^m - 1 - m]
-    which always have a minimum Hamming distance of 3.
-    The standard way to create a non-systematic parity matrix H for the
-    Hamming code [2^m - 1, 2^m - 1 - m] (e.g., if m = 3, we have a [7, 4])
-    is to enumerate all the integers b/w 1 and 2^m - 1 in binary form.
-
-    All of this binary integers will represent the column vectors of the
-    parity matrix H. So, we put all of them one after the other.
-    As for the usual notation, 2^m - 1 = n, 2^m - 1 - m = k, r = n - k
-    """
-    _assert_hamming(n, k)
-    # e.g. n = 7, k = 4, r = 3
-    r = n - k
+def generate_parity_matrix_nonsystematic_for_hamming_from_r(r: int):
+    n = 2**r - 1
     support = np.array([i for i in range(1, n + 1)])
     _logger.debug("SUPPORT ARRAY\n{0}".format(support))
     # Create columns from previous range.
@@ -36,9 +22,28 @@ def generate_parity_matrix_nonsystematic_for_hamming(n, k, d=3):
     # Then it put the columns together in a 3x7 (rxk) matrix
     # This is the standard way of creating a nonsystematic parity matrix
     # for an hamming code
-    h = (((support[:, None] & (1 << np.arange(r)))) > 0).T.astype(int)
+    h = (((support[:, None] & (1 << np.arange(r)))) > 0).T.astype(np.uint8)
     _logger.debug("H\n{0}".format(h))
     return h
+
+
+def generate_parity_matrix_nonsystematic_for_hamming(n, k, d=3):
+    """
+    This only works for Hamming codes, i.e. codes in the form
+    [2^r - 1, 2^r - 1 - r]
+    which always have a minimum Hamming distance of 3.
+    The standard way to create a non-systematic parity matrix H for the
+    Hamming code [2^r - 1, 2^r - 1 - r] (e.g., if r = 3, we have a [7, 4])
+    is to enumerate all the integers b/w 1 and 2^r - 1 in binary form.
+
+    All of this binary integers will represent the column vectors of the
+    parity matrix H. So, we put all of them one after the other.
+    As for the usual notation, 2^r - 1 = n, 2^r - 1 - r = k
+
+    The systematic form should be in the form (A| I_r).
+    """
+    _assert_hamming(n, k)
+    return generate_parity_matrix_nonsystematic_for_hamming_from_r(n - k)
 
 
 def generate_parity_matrix_from_systematic_g(g):
@@ -103,17 +108,18 @@ def add_overall_parity_bits_to_h(h, systematic=False):
 
 # Useless, but useful insights
 def generate_parity_matrix_systematic_for_hamming(n, k, d=3):
-    """
-    Generate a systematic matrix for an [n, k] code. Basically, we first get a
+    """Generate a systematic matrix for an [n, k] code. Basically, we first get a
     non-systematic parity matrix H using the appropriate function. Then, we
     permute the columns until the left (n-k)x(n-k) submatrix of H corresponds
     to the identity matrix I.
-    WARNING: This can take a very huge time, be careful!
+
+    WARNING: This can take a very huge time. It has only educational purpose
+    and it is not meant to be used in production code, be careful!
+
     """
-    pass
     _assert_hamming(n, k, d)
     r = n - k
-    h = generate_parity_matrix_nonsystematic(n, k, d)
+    h = generate_parity_matrix_nonsystematic_for_hamming(n, k, d)
 
     ir = np.eye(r)
     i = 0
