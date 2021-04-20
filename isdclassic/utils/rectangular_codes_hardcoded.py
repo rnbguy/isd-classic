@@ -16,7 +16,10 @@ def get_isd_systematic_parameters(n, k, d, w):
     :rtype: 
 
     """
-    # Hamming r = 2
+    ###############
+    # Hamming 
+    # n = 2^r-1; k = n - r; d = 3
+    ###############
     if (n, k, d, w) == (4, 1, 4, 1):
         return _get_4_1_4_w1()
     # ... r = 3

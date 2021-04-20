@@ -13,7 +13,7 @@ class Bruteforce(ISDWithoutLists):
     def run(self):
         error = np.zeros(self.n)
         for i in itertools.combinations(range(self.n), self.t):
-            # extract only the columns indexed by i
+            # extract only  the columns indexed by i
             h_extr = self.h[:, i]
             # sum the columns by rows
             if np.array_equal(h_extr.sum(axis=1) % 2, self.s):
