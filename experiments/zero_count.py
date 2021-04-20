@@ -2,14 +2,16 @@ from itertools import combinations
 
 import numpy as np
 from isdclassic.utils import rectangular_codes_hardcoded as rch
+from isdclassic.utils import rectangular_codes_generation as rcg
 
 # from copy import deepcopy
 # import functools
 # import operator
 
 
-def go(h, t, p, syn, double_check=False):
-    assert t - p >= 0
+def go(h, t, p, syn, double_check=False, check_inner=True):
+    if check_inner:
+        assert t - p >= 0
     r, n = h.shape
     k = n - r
     iden = np.eye(r)
@@ -21,7 +23,7 @@ def go(h, t, p, syn, double_check=False):
     for tot_iter, isdstar_cols in enumerate(combinations(range(n), r)):
         isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
         h_rref = h.copy()
-        syn_sig = syn.copy()
+        syn_sig = syn.copy() if syn is not None else None
         # U was used just for double check
         # u = np.eye(r, dtype=np.ubyte)
         # _rref(h_rref, syn_sig, u, isdstar_cols)
@@ -42,7 +44,8 @@ def go(h, t, p, syn, double_check=False):
             #         bla = u @ h % 2
             #         print(bla)
             #         input("a")
-
+        if not check_inner:
+            continue
         # We proceed to extract independently from the identity matrix check,
         # simulating exactly the quantum circuit behaviour
         for tot_iter2, v_cols in enumerate(combinations(isd_cols, p)):
@@ -55,29 +58,35 @@ def go(h, t, p, syn, double_check=False):
                 # tot_correct_weight_cols.append((isd_cols, v_cols))
 
     tot_iter += 1
-    tot_iter2 += 1
     print(f"tot_iter = binom(n,r) {tot_iter}")
-    print(f"tot_iter2 = binom(k,p) {tot_iter2}")
+    if check_inner:
+        tot_iter2 += 1
+        print(f"tot_iter2 = binom(k,p) {tot_iter2}")
+
     print(f"identity matrices {tot_iden}")
-    print(
-        f"correct weights (independently of identity matrix) {tot_correct_weight}"
-    )
-    print(
-        f"correct weights (given matrix was identity) {tot_correct_weight_iden}"
-    )
+
+    if check_inner:
+        print(
+            f"correct weights (independently of identity matrix) {tot_correct_weight}"
+        )
+        print(
+            f"correct weights (given matrix was identity) {tot_correct_weight_iden}"
+        )
     print("Some stats")
     print(f"% total identities = tot_iden / tot_iter: {tot_iden / tot_iter}")
-    print(
-        f"% total correct weights = tot_correct_weight / (tot_iter * tot_iter2): {tot_correct_weight / (tot_iter * tot_iter2)}"
-    )
-    print(
-        f"% total correct weights identity = tot_correct_weight_iden / (tot_iter * tot_iter2): {tot_correct_weight_iden / (tot_iter * tot_iter2)}"
-    )
+
+    if check_inner:
+        print(
+            f"% total correct weights = tot_correct_weight / (tot_iter * tot_iter2): {tot_correct_weight / (tot_iter * tot_iter2)}"
+        )
+        print(
+            f"% total correct weights identity = tot_correct_weight_iden / (tot_iter * tot_iter2): {tot_correct_weight_iden / (tot_iter * tot_iter2)}"
+        )
     print("*" * 30)
 
 
+# def _rref(mat, syn, u, idx_cols: tuple):
 def _rref(mat, syn, idx_cols: tuple):
-    # def _rref(mat, syn, u, idx_cols: tuple):
     fake_swaps = []
     col_adds = []
     # square matrix
@@ -93,7 +102,9 @@ def _rref(mat, syn, idx_cols: tuple):
                 fake_swaps.append(0)
             _sum_rows(mat[row1, :], mat[row2, :], fake_swaps[-1])
             # _sum_rows(u[row1, :], u[row2, :], fake_swaps[-1])
-            syn[row1] = _mcnot_as_logic(syn[row1], syn[row2], fake_swaps[-1])
+            if syn is not None:
+                syn[row1] = _mcnot_as_logic(syn[row1], syn[row2],
+                                            fake_swaps[-1])
 
         # Transform each row2 element below row1 into 0
         for row2, col2 in enumerate(idx_cols):
@@ -106,7 +117,8 @@ def _rref(mat, syn, idx_cols: tuple):
                 col_adds.append(0)
             _sum_rows(mat[row2, :], mat[row1, :], col_adds[-1])
             # _sum_rows(u[row2, :], u[row1, :], col_adds[-1])
-            syn[row2] = _mcnot_as_logic(syn[row2], syn[row1], col_adds[-1])
+            if syn is not None:
+                syn[row2] = _mcnot_as_logic(syn[row2], syn[row1], col_adds[-1])
     # return u
 
 
@@ -131,17 +143,33 @@ def _get_error(isd_cols, v_cols, sum_to_s):
     return e_hat
 
 
-def main():
+def only_iden():
+    # h = rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(5)
+    # h = rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(6)
+    h = rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(7)
+
+    r, n = h.shape
+    print(f"n {n} k {n-r} r {r} ")
+    go(h, None, None, None, double_check=False, check_inner=False)
+
+
+def iden_and_w():
     n, k, d, w = 23, 12, 7, 3
     # n, k, d, w = 16, 11, 4, 1
     # n, k, d, w = 7, 4, 3, 1
-    h, g, syndromes, errors, w, isHamming = rch.get_isd_systematic_parameters(
-        n, k, d, w)
+    # h, g, syndromes, errors, w, isHamming = rch.get_isd_systematic_parameters(
+    #     n, k, d, w)
+
+    # for p in reversed(range(w + 1)):
     # for p in range(1, 3):
     for p in range(w + 1):
-        # for p in reversed(range(w + 1)):
         print(f"n {n} k {k} t {w} p {p}")
         go(h, w, p, syndromes[0], double_check=False)
+
+
+def main():
+    # iden_and_w()
+    only_iden()
 
 
 if __name__ == '__main__':
