@@ -29,7 +29,12 @@ class Prange(ISDWithoutLists):
 
         args = {}
         if self.rref_mode == self.RREF_MODES[1]:
-            args['comb'] = itertools.combinations(range(self.n), self.r)
+            # The idea is that we either select the information select I or the
+            # complement I* based on which one is less. It doesn't change much
+            # classically.
+            whois = min(self.r, self.k)
+            args['comb'] = itertools.combinations(range(self.n), whois)
+            args['is'] = "normal" if whois == self.r else "star"
         elif self.rref_mode == self.RREF_MODES[2]:
             iden = np.eye(self.n)
             args['perm'] = itertools.permutations(iden)
