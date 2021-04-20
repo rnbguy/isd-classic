@@ -21,3 +21,17 @@ class Bruteforce(ISDWithoutLists):
                     error[j] = 1
                 self.result['indexes'] = i
                 return error
+
+    def count_n_solutions(self):
+        n = 0
+        error = np.zeros(self.n)
+        for i in itertools.combinations(range(self.n), self.t):
+            # extract only the columns indexed by i
+            h_extr = self.h[:, i]
+            # sum the columns by rows
+            if np.array_equal(h_extr.sum(axis=1) % 2, self.s):
+                for j in i:
+                    error[j] = 1
+                self.result['indexes'] = i
+                n += 1
+        return n
