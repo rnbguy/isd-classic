@@ -4,6 +4,10 @@ import numpy as np
 from isdclassic.utils import rectangular_codes_hardcoded as rch
 from isdclassic.utils import rectangular_codes_generation as rcg
 
+from math import comb
+
+from sage.all import Expression, product, var
+
 # from copy import deepcopy
 # import functools
 # import operator
@@ -58,19 +62,21 @@ def go(h, t, p, syn, double_check=False, check_inner=True):
                 # tot_correct_weight_cols.append((isd_cols, v_cols))
 
     tot_iter += 1
-    print(f"tot_iter = binom(n,r) {tot_iter}")
+    print(f"tot_iter: expected [binom(n,r)] = {comb(n,r)}, real = {tot_iter}")
     if check_inner:
         tot_iter2 += 1
-        print(f"tot_iter2 = binom(k,p) {tot_iter2}")
+        print(f"tot_iter2: expected [binom(k,p)]= {comb(k,p)}, real = {tot_iter2}")
 
-    print(f"identity matrices {tot_iden}")
+    print("identity matrices expected [prod_(i=1)(r)(1-1/2^i)] = .288")
+    print(f"identity matrices found = {tot_iden}")
 
     if check_inner:
+        print(f"correct weights expected =? {comb(r,t-p)}")
         print(
-            f"correct weights (independently of identity matrix) {tot_correct_weight}"
+            f"correct weights (independently of identity matrix) = {tot_correct_weight}"
         )
         print(
-            f"correct weights (given matrix was identity) {tot_correct_weight_iden}"
+            f"correct weights (given matrix was identity) = {tot_correct_weight_iden}"
         )
     print("Some stats")
     print(f"% total identities = tot_iden / tot_iter: {tot_iden / tot_iter}")
@@ -84,6 +90,10 @@ def go(h, t, p, syn, double_check=False, check_inner=True):
         )
     print("*" * 30)
 
+
+# def _n_exp_identities(r):
+#     i = var('i')
+#     return product(1 - 2**(-i), i, 1, r, hold=False)
 
 # def _rref(mat, syn, u, idx_cols: tuple):
 def _rref(mat, syn, idx_cols: tuple):
@@ -154,22 +164,22 @@ def only_iden():
 
 
 def iden_and_w():
-    n, k, d, w = 23, 12, 7, 3
-    # n, k, d, w = 16, 11, 4, 1
+    # n, k, d, w = 23, 12, 7, 3
+    n, k, d, w = 16, 11, 4, 1
     # n, k, d, w = 7, 4, 3, 1
-    # h, g, syndromes, errors, w, isHamming = rch.get_isd_systematic_parameters(
-    #     n, k, d, w)
+    h, g, syndromes, errors, w, isHamming = rch.get_isd_systematic_parameters(
+        n, k, d, w)
 
     # for p in reversed(range(w + 1)):
     # for p in range(1, 3):
     for p in range(w + 1):
-        print(f"n {n} k {k} t {w} p {p}")
+        print(f"n {n} k {k} r {n-k}\nt {w} p {p}")
         go(h, w, p, syndromes[0], double_check=False)
 
 
 def main():
-    # iden_and_w()
-    only_iden()
+    iden_and_w()
+    # only_iden()
 
 
 if __name__ == '__main__':
