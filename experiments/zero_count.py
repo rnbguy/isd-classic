@@ -161,6 +161,29 @@ compute all possible permutations of columns, apply RREF and check if the right
     h = rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(7)
     _only_iden(h)
 
+
+def _gen_random_matrix_and_rank_check(r, k):
+    rng = np.random.default_rng()
+    # Discrete uniform distribution
+    h = rng.integers(2, size=(r, k))
+    rank = np.linalg.matrix_rank(h)
+    # Check if rank should be r or k and dimensions
+    while rank != r:
+        h = rng.integers(2, size=(r, k))
+        rank = np.linalg.matrix_rank(h)
+    return h
+
+
+def only_iden_with_random_matrix():
+    # n, k = 180, 110
+    n, k, d, w = 23, 12, 7, 3
+    # n, k, d, w = 16, 11, 4, 1
+    # n, k, d, w = 7, 4, 3, 1
+    r = n - k
+    h = _gen_random_matrix_and_rank_check(r, k)
+    _only_iden(h)
+
+
 def _only_iden(h):
     r, n = h.shape
     print(f"n {n} k {n-r} r {r} ")
