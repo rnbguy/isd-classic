@@ -35,10 +35,7 @@ def go(h, t, p, syn, double_check=False, check_inner=True):
         h_rref = h.copy()
         syn_sig = syn.copy() if syn is not None else None
         # U is used just for double check
-        if double_check:
-            u = np.eye(r, dtype=np.ubyte)
-        else:
-            u = None
+        u = np.eye(r, dtype=np.ubyte) if double_check else None
         rref(h_rref, isdstar_cols, syn_sig, u)
         h_right = h_rref[:, isdstar_cols]
         isiden = np.array_equal(h_right, iden)
@@ -88,7 +85,8 @@ def go(h, t, p, syn, double_check=False, check_inner=True):
     if check_inner:
         print("-" * 20)
         print(f"# Correct weights")
-        print(f"expected ?= [binom(r,t-p)] {comb(r,t-p)}")
+        # TODO this is only valid for Prange (i.e., p=0)
+        print(f"expected = [binom(n-t,k)] {comb(n-t,k)}")
         print(
             f"real (independently of identity matrix) = {tot_correct_weight}")
         print(f"real (given matrix was identity) = {tot_correct_weight_iden}")
@@ -106,22 +104,22 @@ def go(h, t, p, syn, double_check=False, check_inner=True):
 def get_matrix(n, k, r, d, w, option: str):
     """Return matrix h (size r*k)"""
     if option == "random":
-        return _gen_random_matrix_and_rank_check(r, k)
+        return _gen_random_matrix_and_rank_check(r, n)
     elif option == "nonsys":
-        return rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(5)
+        return rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(r)
     elif option == "sys":
         return rch.get_isd_systematic_parameters(n, k, d, w)
     else:
         raise Exception("invalid choice")
 
 
-def _gen_random_matrix_and_rank_check(r, k):
+def _gen_random_matrix_and_rank_check(r, n):
     rng = np.random.default_rng()
     # Discrete uniform distribution
-    h = rng.integers(2, size=(r, k))
+    h = rng.integers(2, size=(r, n))
     rank = np.linalg.matrix_rank(h)
     while rank != r:
-        h = rng.integers(2, size=(r, k))
+        h = rng.integers(2, size=(r, n))
         rank = np.linalg.matrix_rank(h)
     return h
 
@@ -130,6 +128,7 @@ def iden(h):
     """Only check the # of identities. In other words, from a given matrix h, we
 compute all possible permutations of columns, apply RREF and check if the right
 (or left, depending on the conventions) part is an identity matrix.
+
     """
     r, n = h.shape
     print(f"n {n} k {n-r} r {r} ")
@@ -153,20 +152,32 @@ def iden_and_w(h, w, syndromes):
 def main():
     #
     # r 4..6
-    # h = rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(6)
+    h = get_matrix(n=None, k=None, r=3, d=None, w=None, option="nonsys")
+    r, n = h.shape
+    d=3
+    w=1
+    # generate an error with w=1
+    error = np.zeros(n, dtype='uint16')
+    error[n-1] = 1
+    np.random.shuffle(error)
+    syndromes = [None]
+    syndromes[0] = h @ error
+
+    # TODO syndromes
     #
-    # r, k
-    # h = get_matrix(n=None, k=k, r=r, d=None, w=None, option="random")
+    # r, n
+    # h = get_matrix(n=n, k=None, r=r, d=None, w=None, option="random")
     #
     # n, k, d, w = 7, 4, 3, 1
-    n, k, d, w = 16, 11, 4, 1
+    # n, k, d, w = 16, 11, 4, 1
     # n, k, d, w = 23, 12, 7, 3
-    h, g, syndromes, errors, w, isHamming = get_matrix(n=n,
-                                                       k=k,
-                                                       d=d,
-                                                       w=w,
-                                                       r=None,
-                                                       option="sys")
+    # h, g, syndromes, errors, w, isHamming = get_matrix(n=n,
+    #                                                    k=k,
+    #                                                    d=d,
+    #                                                    w=w,
+    #                                                    r=None,
+    #                                                    option="sys")
+
     # iden(h)
     iden_and_w(h, w, syndromes)
 
