@@ -3,8 +3,10 @@ weights found using a classical algorithm identical to the quantum algorithm
 implementation.
 """
 from itertools import combinations
-from math import comb
-# from numba import jit
+try:  # python >= 3.8
+    from math import comb
+except ImportError:
+    from scipy.special import comb
 
 import numpy as np
 from experiments.quantemu.rref_reversible import rref
@@ -12,6 +14,7 @@ import operator
 
 # from multiprocessing.pool import ThreadPool as Pool
 from multiprocessing import Pool
+
 
 def _go_support(h, h_cols, isdstar_cols, iden):
     isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
@@ -21,7 +24,7 @@ def _go_support(h, h_cols, isdstar_cols, iden):
     isiden = np.array_equal(h_right, iden)
     return isiden
 
-# @jit(nopython=True)
+
 def go(h, pool: Pool):
     r, n = h.shape
     iden = np.eye(r)
@@ -54,6 +57,7 @@ def go(h, pool: Pool):
     print(f"real: {tot_iden / tot_iter}")
     print("*" * 30)
 
+
 def gen_random_matrix_and_rank_check(r, n, rank_check=False):
     rng = np.random.default_rng()
     # Discrete uniform distribution
@@ -67,7 +71,7 @@ def gen_random_matrix_and_rank_check(r, n, rank_check=False):
 
 
 def main():
-    rank_check=True
+    rank_check = True
     print(f"rank_check {rank_check}")
     h = gen_random_matrix_and_rank_check(10, 19, rank_check=rank_check)
     pool_size = 12
@@ -76,6 +80,6 @@ def main():
     pool.close()
     pool.join()
 
+
 if __name__ == '__main__':
     main()
-

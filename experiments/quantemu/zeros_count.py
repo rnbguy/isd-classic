@@ -3,7 +3,10 @@ weights found using a classical algorithm identical to the quantum algorithm
 implementation.
 """
 from itertools import combinations
-from math import comb
+try:  # python >= 3.8
+        from math import comb
+except ImportError:
+        from scipy.special import comb
 
 import numpy as np
 from experiments.quantemu.rref_reversible import rref
