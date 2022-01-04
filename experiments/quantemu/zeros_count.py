@@ -6,6 +6,7 @@ from itertools import combinations
 from math import comb
 
 import numpy as np
+from experiments.quantemu.rref_reversible import rref
 from isdclassic.utils import rectangular_codes_generation as rcg
 from isdclassic.utils import rectangular_codes_hardcoded as rch
 
@@ -20,8 +21,8 @@ def go(h, t, p, syn, double_check=False, check_inner=True):
     tot_correct_weight = 0
     tot_correct_weight_iden = 0
     h_cols = set(range(n))
-    # tot_correct_weight_cols = []
-    # the 2 definitions should be useless, but avoid errors in case of no iterations
+    # the 2 definitions should be useless, but avoid later errors in case of no
+    # iterations is equal to 0
     tot_iter = 0
     tot_iter2 = 0
     print("-" * 20)
@@ -38,11 +39,11 @@ def go(h, t, p, syn, double_check=False, check_inner=True):
             u = np.eye(r, dtype=np.ubyte)
         else:
             u = None
-        _rref(h_rref, syn_sig, u, isdstar_cols)
-        isiden = False
-        if np.array_equal(h_rref[:, isdstar_cols], iden):
+        rref(h_rref, isdstar_cols, syn_sig, u)
+        h_right = h_rref[:, isdstar_cols]
+        isiden = np.array_equal(h_right, iden)
+        if isiden:
             tot_iden += 1
-            isiden = True
             if double_check:
                 res = u @ h % 2
                 try:
@@ -102,64 +103,16 @@ def go(h, t, p, syn, double_check=False, check_inner=True):
     print("*" * 30)
 
 
-def _rref(mat, syn, u, idx_cols: tuple):
-    fake_swaps = []
-    col_adds = []
-    # square matrix
-    steps = 0
-    for row1, col1 in enumerate(idx_cols):
-        # Fake-swap the row if the pivot is 0
-        for row2_add, col2 in enumerate(idx_cols[row1 + 1:]):
-            row2 = row1 + 1 + row2_add
-            steps += 1
-            if mat[row1][col1] == 0:
-                fake_swaps.append(1)
-            else:  # == 1
-                fake_swaps.append(0)
-            _sum_rows(mat[row1, :], mat[row2, :], fake_swaps[-1])
-            if u is not None:
-                _sum_rows(u[row1, :], u[row2, :], fake_swaps[-1])
-            if syn is not None:
-                syn[row1] = _mcnot_as_logic(syn[row1], syn[row2],
-                                            fake_swaps[-1])
-
-        # Transform each row2 element below row1 into 0
-        for row2, col2 in enumerate(idx_cols):
-            if row2 == row1:
-                continue
-            steps += 1
-            if mat[row2, col1] == 1:
-                col_adds.append(1)
-            else:
-                col_adds.append(0)
-            _sum_rows(mat[row2, :], mat[row1, :], col_adds[-1])
-            if u is not None:
-                _sum_rows(u[row2, :], u[row1, :], col_adds[-1])
-            if syn is not None:
-                syn[row2] = _mcnot_as_logic(syn[row2], syn[row1], col_adds[-1])
-    # return u
-
-
-def _sum_rows(dst_row, src_row, ctrl):
-    for i, (dst_cell, src_cell) in enumerate(zip(dst_row, src_row)):
-        dst_row[i] = _mcnot_as_logic(dst_cell, src_cell, ctrl)
-
-
-def _mcnot_as_logic(dst, *ctrls):
-    # reduce doesn't short-circuit
-    # return dst ^ functools.reduce(operator.and_, ctrls)
-    return dst ^ all(ctrls)
-
-
-def only_iden():
-    """Only check the # of identities. In other words, from a given matrix h, we
-compute all possible permutations of columns, apply RREF and check if the right
-(or left, depending on the conventions) part is an identity matrix.
-    """
-    # h = rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(5)
-    # h = rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(6)
-    h = rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(7)
-    _only_iden(h)
+def get_matrix(n, k, r, d, w, option: str):
+    """Return matrix h (size r*k)"""
+    if option == "random":
+        return _gen_random_matrix_and_rank_check(r, k)
+    elif option == "nonsys":
+        return rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(5)
+    elif option == "sys":
+        return rch.get_isd_systematic_parameters(n, k, d, w)
+    else:
+        raise Exception("invalid choice")
 
 
 def _gen_random_matrix_and_rank_check(r, k):
@@ -167,65 +120,56 @@ def _gen_random_matrix_and_rank_check(r, k):
     # Discrete uniform distribution
     h = rng.integers(2, size=(r, k))
     rank = np.linalg.matrix_rank(h)
-    # Check if rank should be r or k and dimensions
     while rank != r:
         h = rng.integers(2, size=(r, k))
         rank = np.linalg.matrix_rank(h)
     return h
 
 
-def only_iden_with_random_matrix():
-    # n, k = 180, 110
-    n, k, d, w = 23, 12, 7, 3
-    # n, k, d, w = 16, 11, 4, 1
-    # n, k, d, w = 7, 4, 3, 1
-    r = n - k
-    h = _gen_random_matrix_and_rank_check(r, k)
-    _only_iden(h)
-
-
-def _only_iden(h):
+def iden(h):
+    """Only check the # of identities. In other words, from a given matrix h, we
+compute all possible permutations of columns, apply RREF and check if the right
+(or left, depending on the conventions) part is an identity matrix.
+    """
     r, n = h.shape
     print(f"n {n} k {n-r} r {r} ")
     go(h, None, None, None, double_check=False, check_inner=False)
 
 
-def iden_and_w():
+def iden_and_w(h, w, syndromes):
     """Check both # of identities and # of correct syndrome weights. Basically, we
     also check that, after RREF, the syndrome has the correct weight.
 
     """
-    # n, k, d, w = 23, 12, 7, 3
-    n, k, d, w = 16, 11, 4, 1
-    # n, k, d, w = 7, 4, 3, 1
-    h, g, syndromes, errors, w, isHamming = rch.get_isd_systematic_parameters(
-        n, k, d, w)
-
+    r, n = h.shape
+    k = n - r
     # for p in reversed(range(w + 1)):
     # for p in range(1, 3):
     for p in range(w + 1):
-        print(f"n {n} k {k} r {n-k}\nt {w} p {p}")
+        print(f"n {n} k {k} r {r}\nt {w} p {p}")
         go(h, w, p, syndromes[0], double_check=True, check_inner=True)
 
 
 def main():
-    iden_and_w()
-    # only_iden()
-    # only_iden_with_random_matrix()
+    #
+    # r 4..6
+    # h = rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(6)
+    #
+    # r, k
+    # h = get_matrix(n=None, k=k, r=r, d=None, w=None, option="random")
+    #
+    # n, k, d, w = 7, 4, 3, 1
+    n, k, d, w = 16, 11, 4, 1
+    # n, k, d, w = 23, 12, 7, 3
+    h, g, syndromes, errors, w, isHamming = get_matrix(n=n,
+                                                       k=k,
+                                                       d=d,
+                                                       w=w,
+                                                       r=None,
+                                                       option="sys")
+    # iden(h)
+    iden_and_w(h, w, syndromes)
 
 
 if __name__ == '__main__':
     main()
-
-# def _n_exp_identities(r):
-#     i = var('i')
-#     return product(1 - 2**(-i), i, 1, r, hold=False)
-
-# def _get_error(isd_cols, v_cols, sum_to_s):
-#     """ Used only in old double check"""
-#     k = len(isd_cols)
-#     e_hat = np.concatenate((np.zeros(k), sum_to_s))
-#     v_cols_idxs = [isd_cols.index(v_col) for v_col in v_cols]
-#     for j in v_cols_idxs:
-#         e_hat[j] = 1
-#     return e_hat
