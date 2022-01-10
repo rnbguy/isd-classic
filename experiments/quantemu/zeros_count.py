@@ -165,15 +165,15 @@ def main():
     # TODO syndromes
     #
     r, n = 4, 12
+    k = n - r
     h = get_matrix(n=n, k=None, r=r, d=None, w=None, option="random")
     # For the Gilbert-Varshamov bound, the probability that, starting from a
     # random matrix, there exists a codeword with weight less than d is low. In
     # the hypothesis, d = \delta * n, and \delta < 1/2. We take 1/4 in our
     # case. To have d=5, we should have an n>=20
     d = (np.floor(.25 * n))
-    if d < 3:
-        raise Exception(
-            f"d should be at least 3 to be able to do something {d}")
+    assert d >= 3, f"d should be at least 3 to be able to do something {d}"
+    assert k <= n - d + 1, "Not respecting Singleton bound"
     w = int(np.floor((d - 1) / 2))
     # Create a random error with weight t
     error = np.concatenate((np.ones(w), np.zeros(n - w)))
@@ -182,7 +182,7 @@ def main():
     syndromes[0] = (h @ error).astype(np.uint8)
 
     #
-    # n, k, d, w = 7, 4, 3, 1
+    # n, k, i, w = 7, 4, 3, 1
     # n, k, d, w = 16, 11, 4, 1
     # n, k, d, w = 23, 12, 7, 3
     # h, g, syndromes, errors, w, isHamming = get_matrix(n=n,
