@@ -2,6 +2,7 @@
 weights found using a classical algorithm identical to the quantum algorithm
 implementation.
 """
+import operator
 from itertools import combinations
 
 try:  # python >= 3.8
@@ -9,13 +10,13 @@ try:  # python >= 3.8
 except ImportError:
     from scipy.special import comb
 
+# from multiprocessing.pool import ThreadPool as Pool
+from multiprocessing import Pool
+
 import numpy as np
 from experiments.quantemu.rref_reversible import rref
 from isdclassic.utils import rectangular_codes_generation as rcg
 from isdclassic.utils import rectangular_codes_hardcoded as rch
-
-# from multiprocessing.pool import ThreadPool as Pool
-from multiprocessing import Pool
 
 
 def _check_iden(h, isdstar_cols, v_cols, t, p, syn, iden):
@@ -23,7 +24,7 @@ def _check_iden(h, isdstar_cols, v_cols, t, p, syn, iden):
     syn_sig = syn.copy() if syn is not None else None
     # U is used just for double check
     # u = np.eye(r, dtype=np.ubyte) if double_check else None
-    rref(h_rref, isd_cols, isdstar_cols, syn=syn, u=None)
+    rref(h_rref, isdstar_cols, syn=syn, u=None)
     h_right = h_rref[:, isdstar_cols]
     isiden = np.array_equal(h_right, iden)
     # We proceed to extract independently from the identity matrix check,
@@ -39,60 +40,61 @@ def go(h, t, p, syn, pool):
     r, n = h.shape
     k = n - r
     iden = np.eye(r)
-    tot_iden = 0
-    tot_correct_weight = 0
-    tot_correct_weight_iden = 0
     h_cols = set(range(n))
     # the 2 definitions should be useless, but avoid later errors in case of no
     # iterations is equal to 0
-    tot_iter = 0
-    tot_iter2 = 0
+    tot_iter1 = comb(n, r)
+    tot_iter2 = comb(k, p)
     print("-" * 20)
-    print(f"tot_iter: expected [binom(n={n},r={r})] = {comb(n,r)}")
-    print(f"tot_iter2: expected [binom(k={k},p={p})]= {comb(k,p)}")
+    print(f"tot_iter1: expected [binom(n={n},r={r})] = {tot_iter1}")
+    print(f"tot_iter2: expected [binom(k={k},p={p})]= {tot_iter2}")
     ress = []
 
-    for tot_iter, isdstar_cols in enumerate(combinations(range(n), r)):
+    for isdstar_cols in combinations(range(n), r):
         isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
-        for tot_iter2, v_cols in enumerate(combinations(isd_cols, p)):
+        for v_cols in combinations(isd_cols, p):
             res = pool.apply_async(_check_iden,
-                                   (h, isdstar_cols, v_cols, t, p syn, iden))
+                                   (h, isdstar_cols, v_cols, t, p, syn, iden))
             ress.append(res)
 
-    tot_iter += 1
-    print(f"tot_iter: real = {tot_iter}")
-    if check_inner:
-        tot_iter2 += 1
-        print(f"tot_iter2: real = {tot_iter2}")
+    # B
+    n_idens = sum(
+        i for i, j in map(operator.methodcaller('get'), ress)) / tot_iter2
+    n_weights = sum(j for i, j in map(operator.methodcaller('get'), ress))
+    n_weights_given_iden = sum(
+        j for i, j in map(operator.methodcaller('get'), ress) if i and j)
+    # print(tot_iter1)
+    # print(tot_iter2)
+    # print(n_idens)
+    # print(n_weights)
+    # print(n_weights_given_iden)
 
     print("-" * 20)
     print(f"# identity matrices")
     # print(f"expected [.288 * tot_iter]: {.288*(2**(r*r))}")
-    print(f"expected [.288 * tot_iter]: {.288*tot_iter}")
-    print(f"real = {tot_iden}")
+    print(f"expected [.288 * tot_iter]: {.288*tot_iter1}")
+    print(f"real = {n_idens}")
 
     # print("Some stats")
     print("-" * 20)
-    print(f"% identities = tot_iden / tot_iter")
+    print(f"% identities")
     print(f"expected: [prod_(i=1)(r)(1-1/2^i)] = .288")
-    print(f"real: {tot_iden / tot_iter}")
+    print(f"real: {n_idens / tot_iter1}")
 
-    if check_inner:
-        print("-" * 20)
-        print(f"# Correct weights")
-        # TODO this is only valid for Prange (i.e., p=0)
-        print(f"expected = [binom(n-t,k)] {comb(n-t,k)}")
-        print(
-            f"real (independently of identity matrix) = {tot_correct_weight}")
-        print(f"real (given matrix was identity) = {tot_correct_weight_iden}")
-        print("-" * 20)
-        print(f"% Correct weights")
-        print(
-            f"% total correct weights = tot_correct_weight / (tot_iter * tot_iter2): {tot_correct_weight / (tot_iter * tot_iter2)}"
-        )
-        print(
-            f"% total correct weights identity = tot_correct_weight_iden / (tot_iter * tot_iter2): {tot_correct_weight_iden / (tot_iter * tot_iter2)}"
-        )
+    print("-" * 20)
+    print(f"# Correct weights")
+    # TODO this is only valid for Prange (i.e., p=0)
+    print(f"expected = [binom(n-t={n-t},k={k})] {comb(n-t,k)}")
+    print(f"real (independently of identity matrix) = {n_weights}")
+    print(f"real (given matrix was identity) = {n_weights_given_iden}")
+    print("-" * 20)
+    print(f"% Correct weights")
+    print(
+        f"% total correct weights = tot_correct_weight / (tot_iter * tot_iter2): {n_weights / (tot_iter1* tot_iter2)}"
+    )
+    print(
+        f"% total correct weights identity = tot_correct_weight_iden / (tot_iter1 * tot_iter2): {n_weights_given_iden / (tot_iter1 * tot_iter2)}"
+    )
     print("*" * 30)
 
 
@@ -119,7 +121,7 @@ def _gen_random_matrix_and_rank_check(r, n):
     return h
 
 
-def iden(h):
+def iden(h, pool):
     """Only check the # of identities. In other words, from a given matrix h, we
 compute all possible permutations of columns, apply RREF and check if the right
 (or left, depending on the conventions) part is an identity matrix.
@@ -127,10 +129,10 @@ compute all possible permutations of columns, apply RREF and check if the right
     """
     r, n = h.shape
     print(f"n {n} k {n-r} r {r} ")
-    go(h, None, None, None, double_check=False, check_inner=False)
+    go(h, None, None, None, pool)
 
 
-def iden_and_w(h, w, syndromes):
+def iden_and_w(h, w, syndromes, pool):
     """Check both # of identities and # of correct syndrome weights. Basically, we
     also check that, after RREF, the syndrome has the correct weight.
 
@@ -141,7 +143,7 @@ def iden_and_w(h, w, syndromes):
     # for p in range(1, 3):
     for p in range(w + 1):
         print(f"n {n} k {k} r {r}\nt {w} p {p}")
-        go(h, w, p, syndromes[0], double_check=True, check_inner=True)
+        go(h, w, p, syndromes[0], pool)
 
 
 def main():
@@ -190,8 +192,8 @@ def main():
     #                                                    r=None,
     #                                                    option="sys")
 
-    # iden(h)
-    iden_and_w(h, w, syndromes)
+    # iden(h, pool)
+    iden_and_w(h, w, syndromes, pool)
     pool.close()
     pool.join()
 
