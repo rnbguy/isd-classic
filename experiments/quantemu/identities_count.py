@@ -16,8 +16,7 @@ import operator
 from multiprocessing import Pool
 
 
-def _go_support(h, h_cols, isdstar_cols, iden):
-    isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
+def _go_support(h, isdstar_cols, iden):
     h_rref = h.copy()
     rref(h_rref, isdstar_cols, syn=None, u=None)
     h_right = h_rref[:, isdstar_cols]
@@ -29,7 +28,6 @@ def go(h, pool: Pool):
     r, n = h.shape
     iden = np.eye(r)
     tot_iden = 0
-    h_cols = set(range(n))
     # the 2 definitions should be useless, but avoid later errors in case of no
     # iterations is equal to 0
     tot_iter = 0
@@ -37,7 +35,7 @@ def go(h, pool: Pool):
     print(f"tot_iter: expected [binom(n,r)] = {comb(n,r)}")
     ress = []
     for tot_iter, isdstar_cols in enumerate(combinations(range(n), r)):
-        res = pool.apply_async(_go_support, (h, h_cols, isdstar_cols, iden))
+        res = pool.apply_async(_go_support, (h, isdstar_cols, iden))
         ress.append(res)
 
     tot_iter += 1
@@ -73,7 +71,7 @@ def gen_random_matrix_and_rank_check(r, n, rank_check=False):
 def main():
     rank_check = True
     print(f"rank_check {rank_check}")
-    h = gen_random_matrix_and_rank_check(10, 19, rank_check=rank_check)
+    h = gen_random_matrix_and_rank_check(9, 15, rank_check=rank_check)
     pool_size = 12
     pool = Pool(pool_size)
     go(h, pool=pool)
