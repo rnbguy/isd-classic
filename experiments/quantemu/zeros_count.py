@@ -3,20 +3,39 @@ weights found using a classical algorithm identical to the quantum algorithm
 implementation.
 """
 from itertools import combinations
+
 try:  # python >= 3.8
-        from math import comb
+    from math import comb
 except ImportError:
-        from scipy.special import comb
+    from scipy.special import comb
 
 import numpy as np
 from experiments.quantemu.rref_reversible import rref
 from isdclassic.utils import rectangular_codes_generation as rcg
 from isdclassic.utils import rectangular_codes_hardcoded as rch
 
+# from multiprocessing.pool import ThreadPool as Pool
+from multiprocessing import Pool
 
-def go(h, t, p, syn, double_check=False, check_inner=True):
-    if check_inner:
-        assert t - p >= 0
+
+def _check_iden(h, isdstar_cols, v_cols, t, p, syn, iden):
+    h_rref = h.copy()
+    syn_sig = syn.copy() if syn is not None else None
+    # U is used just for double check
+    # u = np.eye(r, dtype=np.ubyte) if double_check else None
+    rref(h_rref, isd_cols, isdstar_cols, syn=syn, u=None)
+    h_right = h_rref[:, isdstar_cols]
+    isiden = np.array_equal(h_right, iden)
+    # We proceed to extract independently from the identity matrix check,
+    # simulating exactly the quantum circuit behaviour
+    sum_to_s = (h_rref[:, v_cols].sum(axis=1) + syn_sig) % 2
+    sum_to_s_w = np.sum(sum_to_s)
+    is_correct_w = sum_to_s_w == t - p
+    return (isiden, is_correct_w)
+
+
+def go(h, t, p, syn, pool):
+    assert t - p >= 0
     r, n = h.shape
     k = n - r
     iden = np.eye(r)
@@ -29,44 +48,16 @@ def go(h, t, p, syn, double_check=False, check_inner=True):
     tot_iter = 0
     tot_iter2 = 0
     print("-" * 20)
-    print(f"tot_iter: expected [binom(n,r)] = {comb(n,r)}")
-    if check_inner:
-        tot_iter2 += 1
-        print(f"tot_iter2: expected [binom(k,p)]= {comb(k,p)}")
+    print(f"tot_iter: expected [binom(n={n},r={r})] = {comb(n,r)}")
+    print(f"tot_iter2: expected [binom(k={k},p={p})]= {comb(k,p)}")
+    ress = []
+
     for tot_iter, isdstar_cols in enumerate(combinations(range(n), r)):
         isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
-        h_rref = h.copy()
-        syn_sig = syn.copy() if syn is not None else None
-        # U is used just for double check
-        u = np.eye(r, dtype=np.ubyte) if double_check else None
-        rref(h_rref, isdstar_cols, syn_sig, u)
-        h_right = h_rref[:, isdstar_cols]
-        isiden = np.array_equal(h_right, iden)
-        if isiden:
-            tot_iden += 1
-            if double_check:
-                res = u @ h % 2
-                try:
-                    np.testing.assert_array_equal(res, h_rref)
-                except:
-                    print("***")
-                    print(h)
-                    print(isd_cols)
-                    print(isdstar_cols)
-                    print(u)
-                    print(res)
-        if not check_inner:
-            continue
-        # We proceed to extract independently from the identity matrix check,
-        # simulating exactly the quantum circuit behaviour
         for tot_iter2, v_cols in enumerate(combinations(isd_cols, p)):
-            sum_to_s = (h_rref[:, v_cols].sum(axis=1) + syn_sig) % 2
-            sum_to_s_w = np.sum(sum_to_s)
-            if sum_to_s_w == t - p:
-                tot_correct_weight += 1
-                if isiden:
-                    tot_correct_weight_iden += 1
-                # tot_correct_weight_cols.append((isd_cols, v_cols))
+            res = pool.apply_async(_check_iden,
+                                   (h, isdstar_cols, v_cols, t, p syn, iden))
+            ress.append(res)
 
     tot_iter += 1
     print(f"tot_iter: real = {tot_iter}")
@@ -76,7 +67,8 @@ def go(h, t, p, syn, double_check=False, check_inner=True):
 
     print("-" * 20)
     print(f"# identity matrices")
-    print(f"expected [.288 * r * r]: {.288*r*r}")
+    # print(f"expected [.288 * tot_iter]: {.288*(2**(r*r))}")
+    print(f"expected [.288 * tot_iter]: {.288*tot_iter}")
     print(f"real = {tot_iden}")
 
     # print("Some stats")
@@ -153,23 +145,40 @@ def iden_and_w(h, w, syndromes):
 
 
 def main():
+    pool_size = 12
+    pool = Pool(pool_size)
     #
     # r 4..6
-    h = get_matrix(n=None, k=None, r=3, d=None, w=None, option="nonsys")
-    r, n = h.shape
-    d=3
-    w=1
-    # generate an error with w=1
-    error = np.zeros(n, dtype='uint16')
-    error[n-1] = 1
-    np.random.shuffle(error)
-    syndromes = [None]
-    syndromes[0] = h @ error
+    # h = get_matrix(n=None, k=None, r=3, d=None, w=None, option="nonsys")
+    # r, n = h.shape
+    # d=3
+    # w=1
+    # # generate an error with w=1
+    # error = np.zeros(n, dtype='uint16')
+    # error[n-1] = 1
+    # np.random.shuffle(error)
+    # syndromes = [None]
+    # syndromes[0] = h @ error
 
     # TODO syndromes
     #
-    # r, n
-    # h = get_matrix(n=n, k=None, r=r, d=None, w=None, option="random")
+    r, n = 4, 12
+    h = get_matrix(n=n, k=None, r=r, d=None, w=None, option="random")
+    # For the Gilbert-Varshamov bound, the probability that, starting from a
+    # random matrix, there exists a codeword with weight less than d is low. In
+    # the hypothesis, d = \delta * n, and \delta < 1/2. We take 1/4 in our
+    # case. To have d=5, we should have an n>=20
+    d = (np.floor(.25 * n))
+    if d < 3:
+        raise Exception(
+            f"d should be at least 3 to be able to do something {d}")
+    w = int(np.floor((d - 1) / 2))
+    # Create a random error with weight t
+    error = np.concatenate((np.ones(w), np.zeros(n - w)))
+    np.random.shuffle(error)
+    syndromes = [None]
+    syndromes[0] = (h @ error).astype(np.uint8)
+
     #
     # n, k, d, w = 7, 4, 3, 1
     # n, k, d, w = 16, 11, 4, 1
@@ -183,6 +192,8 @@ def main():
 
     # iden(h)
     iden_and_w(h, w, syndromes)
+    pool.close()
+    pool.join()
 
 
 if __name__ == '__main__':
