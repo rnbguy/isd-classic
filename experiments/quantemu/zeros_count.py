@@ -1,8 +1,10 @@
+#!/usr/bin/python3
 """A simple module to compute the # of identity matrices and # of correct
 weights found using a classical algorithm identical to the quantum algorithm
 implementation.
 """
 import operator
+import argparse
 from itertools import combinations
 
 try:  # python >= 3.8
@@ -17,6 +19,41 @@ import numpy as np
 from experiments.quantemu.rref_reversible import rref
 from isdclassic.utils import rectangular_codes_generation as rcg
 from isdclassic.utils import rectangular_codes_hardcoded as rch
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        "Counts the zeros of the RREF reversible function")
+    parser.add_argument("-n", type=int)
+    parser.add_argument("-r", type=int)
+    parser.add_argument("-k", type=int)
+    parser.add_argument("-d", type=int)
+    parser.add_argument("-t", type=int)
+    parser.add_argument("-j",
+                        type=int,
+                        help="# of parallel processes",
+                        default=1)
+    parser.add_argument("h_generator",
+                        choices=('random', 'hamming', 'other'),
+                        default='random',
+                        nargs='?')
+    namespace = parser.parse_args()
+    if namespace.h_generator == 'hamming':
+        assert (namespace.r is not None
+                and namespace.r > 0), "For choice Hamming r must be > 0"
+    elif namespace.h_generator == 'random':
+        assert (namespace.r is not None and namespace.r > 0
+                and namespace.n is not None and namespace.n > 0
+                and namespace.n > namespace.r
+                ), "For choice random n and r must be defined, with n>r"
+    elif namespace.h_generator == 'other':
+        assert (namespace.n is not None and namespace.n > 0
+                and namespace.k is not None and namespace.k > 0
+                and namespace.d is not None and namespace.d > 2
+                and namespace.t is not None and namespace.t > 0
+                ), "For choice other you must specify all parameters"
+
+    return namespace
 
 
 def _check_iden(h, isdstar_cols, v_cols, t, p, syn, iden):
@@ -59,8 +96,8 @@ def go(h, t, p, syn, pool):
 
     # B
     n_idens = sum(
-        i for i, j in map(operator.methodcaller('get'), ress)) / tot_iter2
-    n_weights = sum(j for i, j in map(operator.methodcaller('get'), ress))
+        i for i, _ in map(operator.methodcaller('get'), ress)) / tot_iter2
+    n_weights = sum(j for _, j in map(operator.methodcaller('get'), ress))
     n_weights_given_iden = sum(
         j for i, j in map(operator.methodcaller('get'), ress) if i and j)
     # print(tot_iter1)
@@ -98,18 +135,6 @@ def go(h, t, p, syn, pool):
     print("*" * 30)
 
 
-def get_matrix(n, k, r, d, w, option: str):
-    """Return matrix h (size r*k)"""
-    if option == "random":
-        return _gen_random_matrix_and_rank_check(r, n)
-    elif option == "nonsys":
-        return rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(r)
-    elif option == "sys":
-        return rch.get_isd_systematic_parameters(n, k, d, w)
-    else:
-        raise Exception("invalid choice")
-
-
 def _gen_random_matrix_and_rank_check(r, n):
     rng = np.random.default_rng()
     # Discrete uniform distribution
@@ -119,17 +144,6 @@ def _gen_random_matrix_and_rank_check(r, n):
         h = rng.integers(2, size=(r, n))
         rank = np.linalg.matrix_rank(h)
     return h
-
-
-def iden(h, pool):
-    """Only check the # of identities. In other words, from a given matrix h, we
-compute all possible permutations of columns, apply RREF and check if the right
-(or left, depending on the conventions) part is an identity matrix.
-
-    """
-    r, n = h.shape
-    print(f"n {n} k {n-r} r {r} ")
-    go(h, None, None, None, pool)
 
 
 def iden_and_w(h, w, syndromes, pool):
@@ -146,27 +160,10 @@ def iden_and_w(h, w, syndromes, pool):
         go(h, w, p, syndromes[0], pool)
 
 
-def main():
-    pool_size = 12
-    pool = Pool(pool_size)
-    #
-    # r 4..6
-    # h = get_matrix(n=None, k=None, r=3, d=None, w=None, option="nonsys")
-    # r, n = h.shape
-    # d=3
-    # w=1
-    # # generate an error with w=1
-    # error = np.zeros(n, dtype='uint16')
-    # error[n-1] = 1
-    # np.random.shuffle(error)
-    # syndromes = [None]
-    # syndromes[0] = h @ error
-
-    # TODO syndromes
-    #
+def _random(r: int, n: int):
     r, n = 4, 12
     k = n - r
-    h = get_matrix(n=n, k=None, r=r, d=None, w=None, option="random")
+    h = _gen_random_matrix_and_rank_check(r, n)
     # For the Gilbert-Varshamov bound, the probability that, starting from a
     # random matrix, there exists a codeword with weight less than d is low. In
     # the hypothesis, d = \delta * n, and \delta < 1/2. We take 1/4 in our
@@ -180,20 +177,46 @@ def main():
     np.random.shuffle(error)
     syndromes = [None]
     syndromes[0] = (h @ error).astype(np.uint8)
+    return h, w, syndromes
 
-    #
-    # n, k, i, w = 7, 4, 3, 1
+
+def _hamming_non_systematic(r: int):
+    n = 2**r - 1
+    h = rcg.generate_parity_matrix_nonsystematic_for_hamming_from_r(r)
+    assert h.shape == (r, n), "Matrix not corresponding"
+    w = 1
+    # generate an error with w=1
+    error = np.zeros(n, dtype='uint16')
+    error[n - 1] = 1
+    np.random.shuffle(error)
+    syndromes = []
+    syndromes.append(((h @ error) % 2).astype(np.uint8))
+    return h, w, syndromes
+
+
+def _other(n: int, k: int, d: int, w: int):
+    # n, k, d, w = 7, 4, 3, 1
     # n, k, d, w = 16, 11, 4, 1
     # n, k, d, w = 23, 12, 7, 3
-    # h, g, syndromes, errors, w, isHamming = get_matrix(n=n,
-    #                                                    k=k,
-    #                                                    d=d,
-    #                                                    w=w,
-    #                                                    r=None,
-    #                                                    option="sys")
+    h, g, syndromes, errors, w, isHamming = rch.get_isd_systematic_parameters(n, k, d, w)
+    return h, w, syndromes
 
-    # iden(h, pool)
-    iden_and_w(h, w, syndromes, pool)
+
+def main():
+    namespace = parse_arguments()
+    print(namespace)
+    # pool_size = 12
+    pool = Pool(namespace.j)
+    if namespace.h_generator == 'random':
+       h, t, syns = _random(namespace.r, namespace.n)
+    elif namespace.h_generator == 'hamming':
+        h, t, syns = _hamming_non_systematic(namespace.r)
+    elif namespace.h_generator == 'other':
+        h, t, syns = _other(namespace.n, namespace.k, namespace.d, namespace.t)
+    else:
+        raise Exception("Error in h generator")
+
+    iden_and_w(h, t, syns, pool)
     pool.close()
     pool.join()
 
