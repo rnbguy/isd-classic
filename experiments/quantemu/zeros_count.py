@@ -61,7 +61,7 @@ def _check_iden(h, isdstar_cols, v_cols, t, p, syn, iden):
     syn_sig = syn.copy() if syn is not None else None
     # U is used just for double check
     # u = np.eye(r, dtype=np.ubyte) if double_check else None
-    rref(h_rref, isdstar_cols, syn=syn, u=None)
+    rref(h_rref, isdstar_cols, syn=syn_sig, u=None)
     h_right = h_rref[:, isdstar_cols]
     isiden = np.array_equal(h_right, iden)
     # We proceed to extract independently from the identity matrix check,
