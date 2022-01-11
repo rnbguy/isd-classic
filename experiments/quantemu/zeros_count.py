@@ -109,7 +109,7 @@ def go(h, t, p, syn, pool):
     print("-" * 20)
     print(f"# identity matrices")
     # print(f"expected [.288 * tot_iter]: {.288*(2**(r*r))}")
-    print(f"expected [.288 * tot_iter]: {.288*tot_iter1}")
+    print(f"expected [.288 * tot_iter1]: {.288*tot_iter1}")
     print(f"real = {n_idens}")
 
     # print("Some stats")
@@ -127,7 +127,7 @@ def go(h, t, p, syn, pool):
     print("-" * 20)
     print(f"% Correct weights")
     print(
-        f"% total correct weights = tot_correct_weight / (tot_iter * tot_iter2): {n_weights / (tot_iter1* tot_iter2)}"
+        f"% total correct weights = tot_correct_weight / (tot_iter1 * tot_iter2): {n_weights / (tot_iter1* tot_iter2)}"
     )
     print(
         f"% total correct weights identity = tot_correct_weight_iden / (tot_iter1 * tot_iter2): {n_weights_given_iden / (tot_iter1 * tot_iter2)}"
@@ -161,7 +161,6 @@ def iden_and_w(h, w, syndromes, pool):
 
 
 def _random(r: int, n: int):
-    r, n = 4, 12
     k = n - r
     h = _gen_random_matrix_and_rank_check(r, n)
     # For the Gilbert-Varshamov bound, the probability that, starting from a
@@ -203,6 +202,7 @@ def _other(n: int, k: int, d: int, w: int):
 
 
 def main():
+    print("#" * 70)
     namespace = parse_arguments()
     print(namespace)
     # pool_size = 12
@@ -219,6 +219,7 @@ def main():
     iden_and_w(h, t, syns, pool)
     pool.close()
     pool.join()
+    print("#" * 70)
 
 
 if __name__ == '__main__':
