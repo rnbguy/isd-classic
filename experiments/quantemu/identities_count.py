@@ -24,7 +24,7 @@ def _go_support(h, isdstar_cols, iden):
     return isiden
 
 
-def go(h, pool: Pool):
+def go(h, pool):
     r, n = h.shape
     iden = np.eye(r)
     tot_iden = 0
