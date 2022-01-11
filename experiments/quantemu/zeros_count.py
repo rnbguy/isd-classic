@@ -56,7 +56,7 @@ def parse_arguments():
     return namespace
 
 
-def _check_iden(h, isdstar_cols, v_cols, t, p, syn, iden):
+def _go_supp(h, isdstar_cols, v_cols, t, p, syn, iden):
     h_rref = h.copy()
     syn_sig = syn.copy() if syn is not None else None
     # U is used just for double check
@@ -90,7 +90,7 @@ def go(h, t, p, syn, pool):
     for isdstar_cols in combinations(range(n), r):
         isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
         for v_cols in combinations(isd_cols, p):
-            res = pool.apply_async(_check_iden,
+            res = pool.apply_async(_go_supp,
                                    (h, isdstar_cols, v_cols, t, p, syn, iden))
             ress.append(res)
 
