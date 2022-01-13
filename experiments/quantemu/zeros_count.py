@@ -29,6 +29,13 @@ def parse_arguments():
     parser.add_argument("-k", type=int)
     parser.add_argument("-d", type=int)
     parser.add_argument("-t", type=int)
+    parser.add_argument("-minp", type=int, help="starting p", default=0)
+    parser.add_argument(
+        "-maxp",
+        type=int,
+        help=
+        ("ending p, by default it will be equal to t and it cannot be bigger than it"
+         ))
     parser.add_argument("-j",
                         type=int,
                         help="# of parallel processes",
@@ -38,21 +45,28 @@ def parse_arguments():
                         default='random',
                         nargs='?')
     namespace = parser.parse_args()
-    if namespace.h_generator == 'hamming':
-        assert (namespace.r is not None
-                and namespace.r > 0), "For choice Hamming r must be > 0"
-    elif namespace.h_generator == 'random':
-        assert (namespace.r is not None and namespace.r > 0
-                and namespace.n is not None and namespace.n > 0
-                and namespace.n > namespace.r
-                ), "For choice random n and r must be defined, with n>r"
-    elif namespace.h_generator == 'other':
-        assert (namespace.n is not None and namespace.n > 0
-                and namespace.k is not None and namespace.k > 0
-                and namespace.d is not None and namespace.d > 2
-                and namespace.t is not None and namespace.t > 0
-                ), "For choice other you must specify all parameters"
 
+    if namespace.minp < 0:
+        namespace.minp = 0
+    if namespace.maxp is not None and namespace.maxp <= namespace.minp:
+        raise argparse.ArgumentTypeError(f"maxp should be greater than minp")
+
+    if namespace.h_generator == 'hamming':
+        if not (namespace.r is not None and namespace.r > 0):
+            raise argparse.ArgumentTypeError(
+                f"For choice Hamming r must be > 0, provided {namespace.r}")
+    elif namespace.h_generator == 'random':
+        if (namespace.r is None or namespace.r < 1 or namespace.n is None
+                or namespace.r < 1 or namespace.n <= namespace.r):
+            raise argparse.ArgumentTypeError(
+                f"For choice random n and r must be defined, with n>r, provided n: {namespace.n} and r: {namespace.r}"
+            )
+    elif namespace.h_generator == 'other':
+        if (namespace.n is None or namespace.n < 1 or namespace.k is None
+                or namespace.k < 1 or namespace.d is None or namespace.d < 3
+                or namespace.t is None or namespace.t < 1):
+            raise argparse.ArgumentTypeError(
+                f"For choice other you must specify all parameters")
     return namespace
 
 
@@ -93,6 +107,15 @@ def go(h, t, p, syn, pool):
             res = pool.apply_async(_go_supp,
                                    (h, isdstar_cols, v_cols, t, p, syn, iden))
             ress.append(res)
+
+    # temp
+
+    # # res_list = reduce(lambda y, x: x.append(y), map(operator.methodcaller('get'), ress), [])
+    # res_list = list(map(operator.methodcaller('get'), ress))
+    # print(res_list)
+    # return
+
+    # /temp
 
     # B
     n_idens = sum(
@@ -146,7 +169,7 @@ def _gen_random_matrix_and_rank_check(r, n):
     return h
 
 
-def iden_and_w(h, w, syndromes, pool):
+def iden_and_w(h, w, syndromes, pool, minp, maxp):
     """Check both # of identities and # of correct syndrome weights. Basically, we
     also check that, after RREF, the syndrome has the correct weight.
 
@@ -155,7 +178,7 @@ def iden_and_w(h, w, syndromes, pool):
     k = n - r
     # for p in reversed(range(w + 1)):
     # for p in range(1, 3):
-    for p in range(w + 1):
+    for p in range(minp, maxp + 1):
         print(f"n {n} k {k} r {r}\nt {w} p {p}")
         go(h, w, p, syndromes[0], pool)
 
@@ -197,7 +220,8 @@ def _other(n: int, k: int, d: int, w: int):
     # n, k, d, w = 7, 4, 3, 1
     # n, k, d, w = 16, 11, 4, 1
     # n, k, d, w = 23, 12, 7, 3
-    h, g, syndromes, errors, w, isHamming = rch.get_isd_systematic_parameters(n, k, d, w)
+    h, g, syndromes, errors, w, isHamming = rch.get_isd_systematic_parameters(
+        n, k, d, w)
     return h, w, syndromes
 
 
@@ -208,7 +232,7 @@ def main():
     # pool_size = 12
     pool = Pool(namespace.j)
     if namespace.h_generator == 'random':
-       h, t, syns = _random(namespace.r, namespace.n)
+        h, t, syns = _random(namespace.r, namespace.n)
     elif namespace.h_generator == 'hamming':
         h, t, syns = _hamming_non_systematic(namespace.r)
     elif namespace.h_generator == 'other':
@@ -216,7 +240,11 @@ def main():
     else:
         raise Exception("Error in h generator")
 
-    iden_and_w(h, t, syns, pool)
+    if namespace.maxp is None or namespace.maxp > namespace.t:
+        namespace.maxp = t
+    print(namespace)
+
+    iden_and_w(h, t, syns, pool, namespace.minp, namespace.maxp)
     pool.close()
     pool.join()
     print("#" * 70)
