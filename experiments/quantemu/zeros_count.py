@@ -5,7 +5,7 @@ implementation.
 """
 import operator
 import argparse
-from itertools import combinations
+from itertools import combinations, product
 
 try:  # python >= 3.8
     from math import comb
@@ -70,7 +70,7 @@ def parse_arguments():
     return namespace
 
 
-def _go_supp(h, isdstar_cols, v_cols, t, p, syn, iden):
+def _rref(h, isdstar_cols, syn, iden):
     h_rref = h.copy()
     syn_sig = syn.copy() if syn is not None else None
     # U is used just for double check
@@ -78,8 +78,13 @@ def _go_supp(h, isdstar_cols, v_cols, t, p, syn, iden):
     rref(h_rref, isdstar_cols, syn=syn_sig, u=None)
     h_right = h_rref[:, isdstar_cols]
     isiden = np.array_equal(h_right, iden)
+    return (h_rref, syn_sig, isdstar_cols, isiden)
+
+
+def _weight(h_rref, isiden, syn_sig, v_cols, t, p):
     # We proceed to extract independently from the identity matrix check,
     # simulating exactly the quantum circuit behaviour
+    # TODO check sum with %2
     sum_to_s = (h_rref[:, v_cols].sum(axis=1) + syn_sig) % 2
     sum_to_s_w = np.sum(sum_to_s)
     is_correct_w = sum_to_s_w == t - p
@@ -99,35 +104,33 @@ def go(h, t, p, syn, pool):
     print("-" * 20)
     print(f"tot_iter1: expected [binom(n={n},r={r})] = {tot_iter1}")
     print(f"tot_iter2: expected [binom(k={k},p={p})]= {tot_iter2}")
-    ress = []
+    rref_ress = []
 
     for isdstar_cols in combinations(range(n), r):
+        res = pool.apply_async(_rref, (h, isdstar_cols, syn, iden))
+        rref_ress.append(res)
+    print('rref done')
+    n_idens = sum(
+        i for _, _, _, i in map(operator.methodcaller('get'), rref_ress))
+
+    weig_ress = []
+    for (h_rref, syn_sig, isdstar_cols,
+         isiden) in map(operator.methodcaller('get'), rref_ress):
         isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
         for v_cols in combinations(isd_cols, p):
-            res = pool.apply_async(_go_supp,
-                                   (h, isdstar_cols, v_cols, t, p, syn, iden))
-            ress.append(res)
+            res = pool.apply_async(_weight,
+                                   (h_rref, isiden, syn_sig, v_cols, t, p))
+            weig_ress.append(res)
+    print('weight done')
 
-    # temp
+    n_weights = 0
+    n_weights_given_iden = 0
 
-    # # res_list = reduce(lambda y, x: x.append(y), map(operator.methodcaller('get'), ress), [])
-    # res_list = list(map(operator.methodcaller('get'), ress))
-    # print(res_list)
-    # return
-
-    # /temp
-
-    # B
-    n_idens = sum(
-        i for i, _ in map(operator.methodcaller('get'), ress)) / tot_iter2
-    n_weights = sum(j for _, j in map(operator.methodcaller('get'), ress))
-    n_weights_given_iden = sum(
-        j for i, j in map(operator.methodcaller('get'), ress) if i and j)
-    # print(tot_iter1)
-    # print(tot_iter2)
-    # print(n_idens)
-    # print(n_weights)
-    # print(n_weights_given_iden)
+    for isiden, is_correct_w in map(operator.methodcaller('get'), weig_ress):
+        if is_correct_w:
+            n_weights += 1
+            if isiden:
+                n_weights_given_iden += 1
 
     print("-" * 20)
     print(f"# identity matrices")
