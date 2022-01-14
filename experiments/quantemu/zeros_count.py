@@ -91,47 +91,25 @@ def _weight(h_rref, isiden, syn_sig, v_cols, t, p):
     return (isiden, is_correct_w)
 
 
-def go(h, t, p, syn, pool):
-    assert t - p >= 0
+def go(h, t, syn, pool, minp, maxp):
     r, n = h.shape
     k = n - r
+    # assert t - p >= 0
     iden = np.eye(r)
     h_cols = set(range(n))
-    # the 2 definitions should be useless, but avoid later errors in case of no
-    # iterations is equal to 0
+
+    print(f"n {n} k {k} r {r}\nt {t}")
     tot_iter1 = comb(n, r)
-    tot_iter2 = comb(k, p)
-    print("-" * 20)
     print(f"tot_iter1: expected [binom(n={n},r={r})] = {tot_iter1}")
-    print(f"tot_iter2: expected [binom(k={k},p={p})]= {tot_iter2}")
     rref_ress = []
 
     for isdstar_cols in combinations(range(n), r):
         res = pool.apply_async(_rref, (h, isdstar_cols, syn, iden))
         rref_ress.append(res)
     print('rref done')
+    # At this point we have all the results for all possible RREF
     n_idens = sum(
         i for _, _, _, i in map(operator.methodcaller('get'), rref_ress))
-
-    weig_ress = []
-    for (h_rref, syn_sig, isdstar_cols,
-         isiden) in map(operator.methodcaller('get'), rref_ress):
-        isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
-        for v_cols in combinations(isd_cols, p):
-            res = pool.apply_async(_weight,
-                                   (h_rref, isiden, syn_sig, v_cols, t, p))
-            weig_ress.append(res)
-    print('weight done')
-
-    n_weights = 0
-    n_weights_given_iden = 0
-
-    for isiden, is_correct_w in map(operator.methodcaller('get'), weig_ress):
-        if is_correct_w:
-            n_weights += 1
-            if isiden:
-                n_weights_given_iden += 1
-
     print("-" * 20)
     print(f"# identity matrices")
     # print(f"expected [.288 * tot_iter]: {.288*(2**(r*r))}")
@@ -144,21 +122,48 @@ def go(h, t, p, syn, pool):
     print(f"expected: [prod_(i=1)(r)(1-1/2^i)] = .288")
     print(f"real: {n_idens / tot_iter1}")
 
-    print("-" * 20)
-    print(f"# Correct weights")
-    # TODO this is only valid for Prange (i.e., p=0)
-    print(f"expected = [binom(n-t={n-t},k={k})] {comb(n-t,k)}")
-    print(f"real (independently of identity matrix) = {n_weights}")
-    print(f"real (given matrix was identity) = {n_weights_given_iden}")
-    print("-" * 20)
-    print(f"% Correct weights")
-    print(
-        f"% total correct weights = tot_correct_weight / (tot_iter1 * tot_iter2): {n_weights / (tot_iter1* tot_iter2)}"
-    )
-    print(
-        f"% total correct weights identity = tot_correct_weight_iden / (tot_iter1 * tot_iter2): {n_weights_given_iden / (tot_iter1 * tot_iter2)}"
-    )
-    print("*" * 30)
+    for p in range(minp, maxp + 1):
+        print("-" * 20)
+        tot_iter2 = comb(k, p)
+        print(f"p = {p}")
+        print(f"tot_iter2: expected [binom(k={k},p={p})]= {tot_iter2}")
+        # print("*" * 30)
+
+        weig_ress = []
+        for (h_rref, syn_sig, isdstar_cols,
+             isiden) in map(operator.methodcaller('get'), rref_ress):
+            isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
+            for v_cols in combinations(isd_cols, p):
+                res = pool.apply_async(_weight,
+                                       (h_rref, isiden, syn_sig, v_cols, t, p))
+                weig_ress.append(res)
+            # print('weight done')
+
+        n_weights = 0
+        n_weights_given_iden = 0
+
+        for isiden, is_correct_w in map(operator.methodcaller('get'),
+                                        weig_ress):
+            if is_correct_w:
+                n_weights += 1
+                if isiden:
+                    n_weights_given_iden += 1
+
+        print("-" * 20)
+        print(f"# Correct weights")
+        # TODO this is only valid for Prange (i.e., p=0)
+        print(f"expected ?= [binom(n-t={n-t},k={k})] {comb(n-t,k)}")
+        print(f"real (independently of identity matrix) = {n_weights}")
+        print(f"real (given matrix was identity) = {n_weights_given_iden}")
+        print("-" * 20)
+        print(f"% Correct weights")
+        print(
+            f"% total correct weights = tot_correct_weight / (tot_iter1 * tot_iter2): {n_weights / (tot_iter1* tot_iter2)}"
+        )
+        print(
+            f"% total correct weights identity = tot_correct_weight_iden / (tot_iter1 * tot_iter2): {n_weights_given_iden / (tot_iter1 * tot_iter2)}"
+        )
+        print("*" * 30)
 
 
 def _gen_random_matrix_and_rank_check(r, n):
@@ -170,20 +175,6 @@ def _gen_random_matrix_and_rank_check(r, n):
         h = rng.integers(2, size=(r, n))
         rank = np.linalg.matrix_rank(h)
     return h
-
-
-def iden_and_w(h, w, syndromes, pool, minp, maxp):
-    """Check both # of identities and # of correct syndrome weights. Basically, we
-    also check that, after RREF, the syndrome has the correct weight.
-
-    """
-    r, n = h.shape
-    k = n - r
-    # for p in reversed(range(w + 1)):
-    # for p in range(1, 3):
-    for p in range(minp, maxp + 1):
-        print(f"n {n} k {k} r {r}\nt {w} p {p}")
-        go(h, w, p, syndromes[0], pool)
 
 
 def _random(r: int, n: int):
@@ -247,7 +238,8 @@ def main():
         namespace.maxp = t
     print(namespace)
 
-    iden_and_w(h, t, syns, pool, namespace.minp, namespace.maxp)
+    # iden_and_w(h, t, syns, pool, namespace.minp, namespace.maxp)
+    go(h, t, syns[0], pool, namespace.minp, namespace.maxp)
     pool.close()
     pool.join()
     print("#" * 70)
