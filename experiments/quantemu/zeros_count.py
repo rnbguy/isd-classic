@@ -6,6 +6,7 @@ implementation.
 import operator
 import argparse
 from itertools import combinations, product
+import os
 
 try:  # python >= 3.8
     from math import comb
@@ -44,6 +45,7 @@ def parse_arguments():
                         choices=('random', 'hamming', 'other'),
                         default='random',
                         nargs='?')
+    parser.add_argument("--set_threads", action='store_true')
     namespace = parser.parse_args()
 
     if namespace.minp < 0:
@@ -91,7 +93,7 @@ def _weight(h_rref, isiden, syn_sig, v_cols, t, p):
     return (isiden, is_correct_w)
 
 
-def go(h, t, syn, pool, minp, maxp):
+def go(h, t, syn, pool, minp, maxp, skip_count_identities=False):
     r, n = h.shape
     k = n - r
     # assert t - p >= 0
@@ -218,12 +220,22 @@ def _other(n: int, k: int, d: int, w: int):
         n, k, d, w)
     return h, w, syndromes
 
+def _prepare_environment():
+    """This is necessary since numpy already uses a lot of threads. See
+https://stackoverflow.com/a/58195413/2326627"""
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["MKL_NUM_THREADS"] = "1"
+    os.environ["OPENBLAS_NUM_THREADS"] = "1"
+    os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+    os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 
 def main():
     print("#" * 70)
     namespace = parse_arguments()
     print(namespace)
-    # pool_size = 12
+    if namespace.j > 1 and namespace.set_threads:
+        _prepare_environment()
     pool = Pool(namespace.j)
     if namespace.h_generator == 'random':
         h, t, syns = _random(namespace.r, namespace.n)
