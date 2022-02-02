@@ -23,6 +23,7 @@ from isdclassic.utils import rectangular_codes_hardcoded as rch
 
 ENVIRONMENT = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
                "OPENBLAS_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+               "OPENBLAS_MAIN_FREE",
                "NUMEXPR_NUM_THREADS")
 
 
