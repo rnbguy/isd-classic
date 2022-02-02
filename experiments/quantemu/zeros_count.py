@@ -21,6 +21,10 @@ from experiments.quantemu.rref_reversible import rref
 from isdclassic.utils import rectangular_codes_generation as rcg
 from isdclassic.utils import rectangular_codes_hardcoded as rch
 
+ENVIRONMENT = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+               "OPENBLAS_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+               "NUMEXPR_NUM_THREADS")
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -73,6 +77,7 @@ def parse_arguments():
 
 
 def _rref(h, isdstar_cols, syn, iden):
+    _assert_environment()
     h_rref = h.copy()
     syn_sig = syn.copy() if syn is not None else None
     # U is used just for double check
@@ -84,6 +89,7 @@ def _rref(h, isdstar_cols, syn, iden):
 
 
 def _weight(h_rref, isiden, syn_sig, v_cols, t, p):
+    _assert_environment()
     # We proceed to extract independently from the identity matrix check,
     # simulating exactly the quantum circuit behaviour
     # TODO check sum with %2
@@ -220,14 +226,22 @@ def _other(n: int, k: int, d: int, w: int):
         n, k, d, w)
     return h, w, syndromes
 
+
 def _prepare_environment():
     """This is necessary since numpy already uses a lot of threads. See
 https://stackoverflow.com/a/58195413/2326627"""
-    os.environ["OMP_NUM_THREADS"] = "1"
-    os.environ["MKL_NUM_THREADS"] = "1"
-    os.environ["OPENBLAS_NUM_THREADS"] = "1"
-    os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
-    os.environ["NUMEXPR_NUM_THREADS"] = "1"
+    print("Setting threads to 1")
+    for env in ENVIRONMENT:
+        os.environ[env] = "1"
+
+def _print_environment():
+    for env in ENVIRONMENT:
+        print(f"{env} = {os.environ[env]}")
+
+def _assert_environment():
+    for env in ENVIRONMENT:
+        assert os.environ[env] == "1", _print_environment()
+
 
 
 def main():
