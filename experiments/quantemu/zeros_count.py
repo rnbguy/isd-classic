@@ -110,15 +110,21 @@ def go(h, t, syn, pool, minp, maxp, skip_count_identities=False):
     print(f"n {n} k {k} r {r}\nt {t}")
     tot_iter1 = comb(n, r)
     print(f"tot_iter1: expected [binom(n={n},r={r})] = {tot_iter1}")
-    rref_ress = []
+    # rref_ress = []
 
-    for isdstar_cols in combinations(range(n), r):
-        res = pool.apply_async(_rref, (h, isdstar_cols, syn, iden))
-        rref_ress.append(res)
+    # for isdstar_cols in combinations(range(n), r):
+    #     res = pool.apply_async(_rref, (h, isdstar_cols, syn, iden))
+    #     rref_ress.append(res)
+
+    # switched to starmap, check imap, imap_unordered, map_async, starmap_async for other usecases
+    rref_ress = pool.starmap(
+        _rref,
+        ((h, isdstar_cols, syn, iden) for isdstar_cols in combinations(range(n), r))
+    )
     print('rref done')
     # At this point we have all the results for all possible RREF
     n_idens = sum(
-        i for _, _, _, i in map(operator.methodcaller('get'), rref_ress))
+        i for _, _, _, i in rref_ress)
     print("-" * 20)
     print(f"# identity matrices")
     # print(f"expected [.288 * tot_iter]: {.288*(2**(r*r))}")
@@ -138,21 +144,29 @@ def go(h, t, syn, pool, minp, maxp, skip_count_identities=False):
         print(f"tot_iter2: expected [binom(k={k},p={p})]= {tot_iter2}")
         # print("*" * 30)
 
-        weig_ress = []
-        for (h_rref, syn_sig, isdstar_cols,
-             isiden) in map(operator.methodcaller('get'), rref_ress):
-            isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
-            for v_cols in combinations(isd_cols, p):
-                res = pool.apply_async(_weight,
-                                       (h_rref, isiden, syn_sig, v_cols, t, p))
-                weig_ress.append(res)
-            # print('weight done')
+        # weig_ress = []
+        # for (h_rref, syn_sig, isdstar_cols,
+        #      isiden) in map(operator.methodcaller('get'), rref_ress):
+        #     isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
+        #     for v_cols in combinations(isd_cols, p):
+        #         res = pool.apply_async(_weight,
+        #                                (h_rref, isiden, syn_sig, v_cols, t, p))
+        #         weig_ress.append(res)
+        #     print('weight done')
+
+        weig_ress = pool.starmap(
+            _weight,
+            (
+                (h_rref, isiden, syn_sig, v_cols, t, p)
+                for (h_rref, syn_sig, isdstar_cols, isiden) in rref_ress
+                for v_cols in combinations(sorted(tuple(h_cols - set(isdstar_cols))), p)
+            )
+        )
 
         n_weights = 0
         n_weights_given_iden = 0
 
-        for isiden, is_correct_w in map(operator.methodcaller('get'),
-                                        weig_ress):
+        for isiden, is_correct_w in weig_ress:
             if is_correct_w:
                 n_weights += 1
                 if isiden:
