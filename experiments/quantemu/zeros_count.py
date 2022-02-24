@@ -214,8 +214,7 @@ def _random(r: int, n: int):
     # Create a random error with weight t
     error = np.concatenate((np.ones(w), np.zeros(n - w)))
     np.random.shuffle(error)
-    syndromes = [None]
-    syndromes[0] = (h @ error).astype(np.uint8)
+    syndromes =  [(h @ error).astype(np.uint8)]
     return h, w, syndromes
 
 
