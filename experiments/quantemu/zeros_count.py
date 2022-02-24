@@ -112,11 +112,12 @@ def _print_idens_stats(tot_iter1, n_idens):
     print(f"expected: [prod_(i=1)(r)(1-1/2^i)] = .288")
     print(f"real: {n_idens / tot_iter1}")
 
-def _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden):
+def _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden, n_weights_expected):
     print("-" * 20)
     print(f"# Correct weights")
     # TODO this is only valid for Prange (i.e., p=0)
     # print(f"expected ?= [binom(n-t={n-t},k={k})] {comb(n-t,k)}")
+    print(f"expected ?= {n_weights_expected}")
     print(f"real (independently of identity matrix) = {n_weights}")
     print(f"real (given matrix was identity) = {n_weights_given_iden}")
     print("-" * 20)
@@ -144,7 +145,7 @@ def go(h, t, syn, pool, minp, maxp):
     rref_ress = pool.imap(_rref,
                              ((h, isdstar_cols, syn, iden)
                               for isdstar_cols in combinations(range(n), r)))
-    print('rref done')
+    # print('rref done')
     # At this point we have all the results for all possible RREF
     # rref_ress is an iterator now, we cannot exhaust it immediately
     rref_ress = list(rref_ress)
@@ -170,7 +171,9 @@ def go(h, t, syn, pool, minp, maxp):
                     n_weights += 1
                     if isiden:
                         n_weights_given_iden += 1
-        _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden)
+        perc_weights_exp = 1/(2**r) * comb(r, t-p)
+        n_weights_exp = perc_weights_exp * tot_iter2 * tot_iter1
+        _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden, n_weights_exp)
 
 
 
