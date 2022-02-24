@@ -4,6 +4,7 @@ weights found using a classical algorithm identical to the quantum algorithm
 implementation.
 """
 import argparse
+from collections import defaultdict
 import os
 from itertools import combinations, product
 
@@ -149,16 +150,12 @@ def go(h, t, syn, pool, minp, maxp):
     # At this point we have all the results for all possible RREF
     # rref_ress is an iterator now, we cannot exhaust it immediately
     n_idens = 0
+    n_weights_dict = defaultdict(int)
+    n_weights_given_iden_dict = defaultdict(int)
 
     for (h_rref, syn_sig, isdstar_cols, isiden) in rref_ress:
         n_idens += isiden
         for p in range(minp, maxp + 1):
-            print("-" * 20)
-            tot_iter2 = comb(k, p)
-            print(f"p = {p}")
-            print(f"tot_iter2: expected [binom(k={k},p={p})]= {tot_iter2}")
-            n_weights = 0
-            n_weights_given_iden = 0
             weig_ress = pool.imap(
                 _weight, ((h_rref, isiden, syn_sig, v_cols, t, p)
                         for v_cols in combinations(
@@ -167,15 +164,22 @@ def go(h, t, syn, pool, minp, maxp):
 
             for isiden, is_correct_w in weig_ress:
                 if is_correct_w:
-                    n_weights += 1
+                    n_weights_dict[p] += 1
                     if isiden:
-                        n_weights_given_iden += 1
-            perc_weights_exp = 1/(2**r) * comb(r, t-p)
-            n_weights_exp = perc_weights_exp * tot_iter2 * tot_iter1
-            _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden, n_weights_exp)
+                        n_weights_given_iden_dict[p] += 1
 
     _print_idens_stats(tot_iter1, n_idens)
 
+    for p in range(minp, maxp + 1):
+        print("-" * 20)
+        tot_iter2 = comb(k, p)
+        print(f"p = {p}")
+        print(f"tot_iter2: expected [binom(k={k},p={p})]= {tot_iter2}")
+        n_weights = n_weights_dict[p]
+        n_weights_given_iden = n_weights_given_iden_dict[p]
+        perc_weights_exp = 1/(2**r) * comb(r, t-p)
+        n_weights_exp = perc_weights_exp * tot_iter2 * tot_iter1
+        _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden, n_weights_exp)
 
 
 def _gen_random_matrix_and_rank_check(r, n):
