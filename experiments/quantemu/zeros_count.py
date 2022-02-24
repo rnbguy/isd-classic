@@ -148,11 +148,10 @@ def go(h, t, syn, pool, minp, maxp):
     # print('rref done')
     # At this point we have all the results for all possible RREF
     # rref_ress is an iterator now, we cannot exhaust it immediately
-    rref_ress = list(rref_ress)
-    n_idens = sum(i for _, _, _, i in rref_ress)
-    _print_idens_stats(tot_iter1, n_idens)
+    n_idens = 0
 
     for (h_rref, syn_sig, isdstar_cols, isiden) in rref_ress:
+        n_idens += isiden
         for p in range(minp, maxp + 1):
             print("-" * 20)
             tot_iter2 = comb(k, p)
@@ -175,6 +174,7 @@ def go(h, t, syn, pool, minp, maxp):
             n_weights_exp = perc_weights_exp * tot_iter2 * tot_iter1
             _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden, n_weights_exp)
 
+    _print_idens_stats(tot_iter1, n_idens)
 
 
 
