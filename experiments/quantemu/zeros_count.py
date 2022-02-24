@@ -5,7 +5,7 @@ implementation.
 """
 import argparse
 import os
-from itertools import combinations
+from itertools import combinations, product
 
 try:  # python >= 3.8
     from math import comb
@@ -75,8 +75,9 @@ def parse_arguments():
     return namespace
 
 
-def _rref(h, isdstar_cols, syn, iden):
-    _assert_environment()
+def _rref(args_tuple):
+    h, isdstar_cols, syn, iden=args_tuple
+    # _assert_environment()
     h_rref = h.copy()
     syn_sig = syn.copy() if syn is not None else None
     # U is used just for double check
@@ -87,8 +88,9 @@ def _rref(h, isdstar_cols, syn, iden):
     return (h_rref, syn_sig, isdstar_cols, isiden)
 
 
-def _weight(h_rref, isiden, syn_sig, v_cols, t, p):
-    _assert_environment()
+def _weight(args_tuple):
+    h_rref, isiden, syn_sig, v_cols, t, p = args_tuple
+    # _assert_environment()
     # We proceed to extract independently from the identity matrix check,
     # simulating exactly the quantum circuit behaviour
     # TODO check sum with %2
@@ -97,30 +99,7 @@ def _weight(h_rref, isiden, syn_sig, v_cols, t, p):
     is_correct_w = sum_to_s_w == t - p
     return (isiden, is_correct_w)
 
-
-def go(h, t, syn, pool, minp, maxp, skip_count_identities=False):
-    r, n = h.shape
-    k = n - r
-    # assert t - p >= 0
-    iden = np.eye(r)
-    h_cols = set(range(n))
-
-    print(f"n {n} k {k} r {r}\nt {t}")
-    tot_iter1 = comb(n, r)
-    print(f"tot_iter1: expected [binom(n={n},r={r})] = {tot_iter1}")
-    # rref_ress = []
-
-    # for isdstar_cols in combinations(range(n), r):
-    #     res = pool.apply_async(_rref, (h, isdstar_cols, syn, iden))
-    #     rref_ress.append(res)
-
-    # switched to starmap, check imap, imap_unordered, map_async, starmap_async for other usecases
-    rref_ress = pool.starmap(_rref,
-                             ((h, isdstar_cols, syn, iden)
-                              for isdstar_cols in combinations(range(n), r)))
-    print('rref done')
-    # At this point we have all the results for all possible RREF
-    n_idens = sum(i for _, _, _, i in rref_ress)
+def _print_idens_stats(tot_iter1, n_idens):
     print("-" * 20)
     print(f"# identity matrices")
     # print(f"expected [.288 * tot_iter]: {.288*(2**(r*r))}")
@@ -133,53 +112,67 @@ def go(h, t, syn, pool, minp, maxp, skip_count_identities=False):
     print(f"expected: [prod_(i=1)(r)(1-1/2^i)] = .288")
     print(f"real: {n_idens / tot_iter1}")
 
+def _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden):
+    print("-" * 20)
+    print(f"# Correct weights")
+    # TODO this is only valid for Prange (i.e., p=0)
+    # print(f"expected ?= [binom(n-t={n-t},k={k})] {comb(n-t,k)}")
+    print(f"real (independently of identity matrix) = {n_weights}")
+    print(f"real (given matrix was identity) = {n_weights_given_iden}")
+    print("-" * 20)
+    print(f"% Correct weights")
+    print(
+        f"% total correct weights = tot_correct_weight / (tot_iter1 * tot_iter2): {n_weights / (tot_iter1* tot_iter2)}"
+    )
+    print(
+        f"% total correct weights identity = tot_correct_weight_iden / (tot_iter1 * tot_iter2): {n_weights_given_iden / (tot_iter1 * tot_iter2)}"
+    )
+    print("*" * 30)
+
+
+def go(h, t, syn, pool, minp, maxp):
+    r, n = h.shape
+    k = n - r
+    # assert t - p >= 0
+    iden = np.eye(r)
+    h_cols = set(range(n))
+
+    print(f"n {n} k {k} r {r}\nt {t}")
+    tot_iter1 = comb(n, r)
+    print(f"tot_iter1: expected [binom(n={n},r={r})] = {tot_iter1}")
+    # switched to starmap, check imap, imap_unordered, map_async, starmap_async for other usecases
+    rref_ress = pool.imap(_rref,
+                             ((h, isdstar_cols, syn, iden)
+                              for isdstar_cols in combinations(range(n), r)))
+    print('rref done')
+    # At this point we have all the results for all possible RREF
+    # rref_ress is an iterator now, we cannot exhaust it immediately
+    rref_ress = list(rref_ress)
+    n_idens = sum(i for _, _, _, i in rref_ress)
+    _print_idens_stats(tot_iter1, n_idens)
+
     for p in range(minp, maxp + 1):
         print("-" * 20)
         tot_iter2 = comb(k, p)
         print(f"p = {p}")
         print(f"tot_iter2: expected [binom(k={k},p={p})]= {tot_iter2}")
-        # print("*" * 30)
-
-        # weig_ress = []
-        # for (h_rref, syn_sig, isdstar_cols,
-        #      isiden) in map(operator.methodcaller('get'), rref_ress):
-        #     isd_cols = sorted(tuple(h_cols - set(isdstar_cols)))
-        #     for v_cols in combinations(isd_cols, p):
-        #         res = pool.apply_async(_weight,
-        #                                (h_rref, isiden, syn_sig, v_cols, t, p))
-        #         weig_ress.append(res)
-        #     print('weight done')
-
-        weig_ress = pool.starmap(
-            _weight, ((h_rref, isiden, syn_sig, v_cols, t, p)
-                      for (h_rref, syn_sig, isdstar_cols, isiden) in rref_ress
-                      for v_cols in combinations(
-                          sorted(tuple(h_cols - set(isdstar_cols))), p)))
-
         n_weights = 0
         n_weights_given_iden = 0
+        for (h_rref, syn_sig, isdstar_cols, isiden) in rref_ress:
+            weig_ress = pool.imap(
+                _weight, ((h_rref, isiden, syn_sig, v_cols, t, p)
+                        for v_cols in combinations(
+                            sorted(tuple(h_cols - set(isdstar_cols))), p)))
 
-        for isiden, is_correct_w in weig_ress:
-            if is_correct_w:
-                n_weights += 1
-                if isiden:
-                    n_weights_given_iden += 1
 
-        print("-" * 20)
-        print(f"# Correct weights")
-        # TODO this is only valid for Prange (i.e., p=0)
-        print(f"expected ?= [binom(n-t={n-t},k={k})] {comb(n-t,k)}")
-        print(f"real (independently of identity matrix) = {n_weights}")
-        print(f"real (given matrix was identity) = {n_weights_given_iden}")
-        print("-" * 20)
-        print(f"% Correct weights")
-        print(
-            f"% total correct weights = tot_correct_weight / (tot_iter1 * tot_iter2): {n_weights / (tot_iter1* tot_iter2)}"
-        )
-        print(
-            f"% total correct weights identity = tot_correct_weight_iden / (tot_iter1 * tot_iter2): {n_weights_given_iden / (tot_iter1 * tot_iter2)}"
-        )
-        print("*" * 30)
+            for isiden, is_correct_w in weig_ress:
+                if is_correct_w:
+                    n_weights += 1
+                    if isiden:
+                        n_weights_given_iden += 1
+        _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden)
+
+
 
 
 def _gen_random_matrix_and_rank_check(r, n):
