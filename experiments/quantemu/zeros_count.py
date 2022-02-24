@@ -152,14 +152,14 @@ def go(h, t, syn, pool, minp, maxp):
     n_idens = sum(i for _, _, _, i in rref_ress)
     _print_idens_stats(tot_iter1, n_idens)
 
-    for p in range(minp, maxp + 1):
-        print("-" * 20)
-        tot_iter2 = comb(k, p)
-        print(f"p = {p}")
-        print(f"tot_iter2: expected [binom(k={k},p={p})]= {tot_iter2}")
-        n_weights = 0
-        n_weights_given_iden = 0
-        for (h_rref, syn_sig, isdstar_cols, isiden) in rref_ress:
+    for (h_rref, syn_sig, isdstar_cols, isiden) in rref_ress:
+        for p in range(minp, maxp + 1):
+            print("-" * 20)
+            tot_iter2 = comb(k, p)
+            print(f"p = {p}")
+            print(f"tot_iter2: expected [binom(k={k},p={p})]= {tot_iter2}")
+            n_weights = 0
+            n_weights_given_iden = 0
             weig_ress = pool.imap(
                 _weight, ((h_rref, isiden, syn_sig, v_cols, t, p)
                         for v_cols in combinations(
@@ -171,9 +171,9 @@ def go(h, t, syn, pool, minp, maxp):
                     n_weights += 1
                     if isiden:
                         n_weights_given_iden += 1
-        perc_weights_exp = 1/(2**r) * comb(r, t-p)
-        n_weights_exp = perc_weights_exp * tot_iter2 * tot_iter1
-        _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden, n_weights_exp)
+            perc_weights_exp = 1/(2**r) * comb(r, t-p)
+            n_weights_exp = perc_weights_exp * tot_iter2 * tot_iter1
+            _print_weights_stats(tot_iter1, tot_iter2, n_weights, n_weights_given_iden, n_weights_exp)
 
 
 
