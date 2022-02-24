@@ -3,10 +3,9 @@
 weights found using a classical algorithm identical to the quantum algorithm
 implementation.
 """
-import operator
 import argparse
-from itertools import combinations, product
 import os
+from itertools import combinations
 
 try:  # python >= 3.8
     from math import comb
@@ -23,8 +22,7 @@ from isdclassic.utils import rectangular_codes_hardcoded as rch
 
 ENVIRONMENT = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
                "OPENBLAS_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
-               "OPENBLAS_MAIN_FREE",
-               "NUMEXPR_NUM_THREADS")
+               "OPENBLAS_MAIN_FREE", "NUMEXPR_NUM_THREADS")
 
 
 def parse_arguments():
@@ -117,14 +115,12 @@ def go(h, t, syn, pool, minp, maxp, skip_count_identities=False):
     #     rref_ress.append(res)
 
     # switched to starmap, check imap, imap_unordered, map_async, starmap_async for other usecases
-    rref_ress = pool.starmap(
-        _rref,
-        ((h, isdstar_cols, syn, iden) for isdstar_cols in combinations(range(n), r))
-    )
+    rref_ress = pool.starmap(_rref,
+                             ((h, isdstar_cols, syn, iden)
+                              for isdstar_cols in combinations(range(n), r)))
     print('rref done')
     # At this point we have all the results for all possible RREF
-    n_idens = sum(
-        i for _, _, _, i in rref_ress)
+    n_idens = sum(i for _, _, _, i in rref_ress)
     print("-" * 20)
     print(f"# identity matrices")
     # print(f"expected [.288 * tot_iter]: {.288*(2**(r*r))}")
@@ -155,13 +151,10 @@ def go(h, t, syn, pool, minp, maxp, skip_count_identities=False):
         #     print('weight done')
 
         weig_ress = pool.starmap(
-            _weight,
-            (
-                (h_rref, isiden, syn_sig, v_cols, t, p)
-                for (h_rref, syn_sig, isdstar_cols, isiden) in rref_ress
-                for v_cols in combinations(sorted(tuple(h_cols - set(isdstar_cols))), p)
-            )
-        )
+            _weight, ((h_rref, isiden, syn_sig, v_cols, t, p)
+                      for (h_rref, syn_sig, isdstar_cols, isiden) in rref_ress
+                      for v_cols in combinations(
+                          sorted(tuple(h_cols - set(isdstar_cols))), p)))
 
         n_weights = 0
         n_weights_given_iden = 0
@@ -214,7 +207,7 @@ def _random(r: int, n: int):
     # Create a random error with weight t
     error = np.concatenate((np.ones(w), np.zeros(n - w)))
     np.random.shuffle(error)
-    syndromes =  [(h @ error).astype(np.uint8)]
+    syndromes = [(h @ error).astype(np.uint8)]
     return h, w, syndromes
 
 
@@ -248,14 +241,15 @@ https://stackoverflow.com/a/58195413/2326627"""
     for env in ENVIRONMENT:
         os.environ[env] = "1"
 
+
 def _print_environment():
     for env in ENVIRONMENT:
         print(f"{env} = {os.environ[env]}")
 
+
 def _assert_environment():
     for env in ENVIRONMENT:
         assert os.environ[env] == "1", _print_environment()
-
 
 
 def main():
